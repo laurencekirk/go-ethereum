@@ -68,21 +68,22 @@ func (n *BlockNonce) UnmarshalText(input []byte) error {
 
 // Header represents a block header in the Ethereum blockchain.
 type Header struct {
-	ParentHash  common.Hash    `json:"parentHash"       gencodec:"required"`
-	UncleHash   common.Hash    `json:"sha3Uncles"       gencodec:"required"`
-	Coinbase    common.Address `json:"miner"            gencodec:"required"`
-	Root        common.Hash    `json:"stateRoot"        gencodec:"required"`
-	TxHash      common.Hash    `json:"transactionsRoot" gencodec:"required"`
-	ReceiptHash common.Hash    `json:"receiptsRoot"     gencodec:"required"`
-	Bloom       Bloom          `json:"logsBloom"        gencodec:"required"`
-	Difficulty  *big.Int       `json:"difficulty"       gencodec:"required"`
-	Number      *big.Int       `json:"number"           gencodec:"required"`
-	GasLimit    *big.Int       `json:"gasLimit"         gencodec:"required"`
-	GasUsed     *big.Int       `json:"gasUsed"          gencodec:"required"`
-	Time        *big.Int       `json:"timestamp"        gencodec:"required"`
-	Extra       []byte         `json:"extraData"        gencodec:"required"`
-	MixDigest   common.Hash    `json:"mixHash"          gencodec:"required"`
-	Nonce       BlockNonce     `json:"nonce"            gencodec:"required"`
+	ParentHash  	common.Hash    `json:"parentHash"       gencodec:"required"`
+	UncleHash   	common.Hash    `json:"sha3Uncles"       gencodec:"required"`
+	Coinbase    	common.Address `json:"miner"            gencodec:"required"`
+	Root        	common.Hash    `json:"stateRoot"        gencodec:"required"`
+	TxHash      	common.Hash    `json:"transactionsRoot" gencodec:"required"`
+	ReceiptHash 	common.Hash    `json:"receiptsRoot"     gencodec:"required"`
+	Bloom       	Bloom          `json:"logsBloom"        gencodec:"required"`
+	Difficulty  	*big.Int       `json:"difficulty"       gencodec:"required"`
+	Number      	*big.Int       `json:"number"           gencodec:"required"`
+	GasLimit    	*big.Int       `json:"gasLimit"         gencodec:"required"`
+	GasUsed     	*big.Int       `json:"gasUsed"          gencodec:"required"`
+	Time        	*big.Int       `json:"timestamp"        gencodec:"required"`
+	Extra       	[]byte         `json:"extraData"        gencodec:"required"`
+	MixDigest   	common.Hash    `json:"mixHash"          gencodec:"required"`
+	Nonce       	BlockNonce     `json:"nonce"            gencodec:"required"`
+	ExtendedHeader 	ExtendedHeader `json:"extendedHeader"   gencodec:"required"`
 }
 
 // field type overrides for gencodec
@@ -118,6 +119,7 @@ func (h *Header) HashNoNonce() common.Hash {
 		h.GasUsed,
 		h.Time,
 		h.Extra,
+		h.ExtendedHeader,
 	})
 }
 
@@ -417,7 +419,8 @@ func (h *Header) String() string {
 	Extra:		    %s
 	MixDigest:      %x
 	Nonce:		    %x
-]`, h.Hash(), h.ParentHash, h.UncleHash, h.Coinbase, h.Root, h.TxHash, h.ReceiptHash, h.Bloom, h.Difficulty, h.Number, h.GasLimit, h.GasUsed, h.Time, h.Extra, h.MixDigest, h.Nonce)
+	ExtendedHeader: %s
+]`, h.Hash(), h.ParentHash, h.UncleHash, h.Coinbase, h.Root, h.TxHash, h.ReceiptHash, h.Bloom, h.Difficulty, h.Number, h.GasLimit, h.GasUsed, h.Time, h.Extra, h.MixDigest, h.Nonce, h.ExtendedHeader)
 }
 
 type Blocks []*Block
