@@ -31,6 +31,7 @@ import (
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/clique"
 	"github.com/ethereum/go-ethereum/consensus/ethash"
+	"github.com/ethereum/go-ethereum/consensus/coterie"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/bloombits"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -174,6 +175,11 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	}
 	eth.ApiBackend.gpo = gasprice.NewOracle(eth.ApiBackend, gpoParams)
 
+	// If the Ethereum node has been set up to use the Coterie consensus engine then wire in the miners whitelist
+	if coterieInstance, ok := eth.engine.(*coterie.Coterie); ok {
+		coterieInstance.SetAuthorisedMinersWhitelist(NewContractBackend(eth.ApiBackend))
+	}
+
 	return eth, nil
 }
 
@@ -211,6 +217,10 @@ func CreateConsensusEngine(ctx *node.ServiceContext, config *Config, chainConfig
 	// If proof-of-authority is requested, set it up
 	if chainConfig.Clique != nil {
 		return clique.New(chainConfig.Clique, db)
+	}
+	// If Coterie is requested, set it up
+	if chainConfig.Coterie != nil {
+		return coterie.New(ctx.GetDataDir, db)
 	}
 	// Otherwise assume proof-of-work
 	switch {
@@ -327,9 +337,17 @@ func (s *Ethereum) StartMining(local bool) error {
 		wallet, err := s.accountManager.Find(accounts.Account{Address: eb})
 		if wallet == nil || err != nil {
 			log.Error("Etherbase account unavailable locally", "err", err)
-			return fmt.Errorf("signer missing: %v", err)
+			return fmt.Errorf("singer missing: %v", err)
 		}
 		clique.Authorize(eb, wallet.SignHash)
+	}
+	if coterie, ok := s.engine.(*coterie.Coterie); ok {
+		wallet, err := s.accountManager.Find(accounts.Account{Address: eb})
+		if wallet == nil || err != nil {
+			log.Error("Etherbase account unavailable locally", "err", err)
+			return fmt.Errorf("singer missing: %v", err)
+		}
+		coterie.Authorize(eb, wallet.SignHashWithPassphrase)
 	}
 	if local {
 		// If local (CPU) mining is started, we can disable the transaction rejection
