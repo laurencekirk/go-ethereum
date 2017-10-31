@@ -24,7 +24,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/consensus/misc"
@@ -60,9 +59,9 @@ var (
 
 // Author implements consensus.Engine, returning the header's coinbase as the
 // proof-of-work verified author of the block.
-func (ethash *Coterie) Author(header *types.Header) (common.Address, error) {
+/*func (ethash *Coterie) Author(header *types.Header) (common.Address, error) {
 	return header.Coinbase, nil
-}
+}*/
 
 // VerifyHeader checks whether a header conforms to the consensus rules of the
 // stock Ethereum ethash engine.

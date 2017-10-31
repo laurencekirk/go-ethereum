@@ -3,7 +3,6 @@ package coterie
 
 import (
 	"errors"
-	"sync"
 	//"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
@@ -50,14 +49,14 @@ func New(dirLocFn DirectoryLocatorFn, db ethdb.Database) *Coterie {
 }
 
 // Consensus - Engine - interface implementation
-
+*/
 // Author retrieves the Ethereum address of the account that minted the given
 // block, which may be different from the header's coinbase if a consensus
 // engine is based on signatures.
 func (c *Coterie) Author(header *types.Header) (common.Address, error) {
 	return RetrieveBlockAuthor(header)
 }
-
+/*
 // VerifyHeader checks whether a header conforms to the consensus rules of a
 // given engine. Verifying the seal may be done optionally here, or explicitly
 // via the VerifySeal method.
@@ -167,6 +166,7 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 	// Hold the signer fields for the entire sealing procedure
 	c.lock.Lock()
 	signer := c.signer
+	c.lock.Unlock()
 
 	// First check to see if the node is part of the current coterie / block-creator set
 	partOfCoterie, err := partOfCurrentCoterie(header, signer)
@@ -176,36 +176,22 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 		// TODO clique returns an error here - look into the consequences of returning a custom error instead of nil
 		return nil, nil
 	}
-	c.lock.Unlock()
 
 	// Create a runner and the multiple search threads it directs
 	abort := make(chan struct{})
 	found := make(chan *types.Block)
 
-	threads := 1
-
-	var pend sync.WaitGroup
-	for i := 0; i < threads; i++ {
-		pend.Add(1)
-		go func() {
-			defer pend.Done()
-			c.seal(block, abort, found)
-		}()
-	}
+	go c.seal(block, abort, found)
 	// Wait until sealing is terminated or a nonce is found
 	var result *types.Block
 	select {
-	case <-stop:
-		// Outside abort, stop all miner threads
-		close(abort)
-	case result = <-found:
-		// One of the threads found a block, abort all others
-		close(abort)
+		case <-stop:
+			// Outside abort, stop all miner threads
+			close(abort)
+		case result = <-found:
+			// One of the threads found a block, abort all others
+			close(abort)
 	}
-	log.Debug("GOV: Waiting for all of the threads to complete")
-	// Wait for all miners to terminate and return the block
-	pend.Wait()
-	// c.lock.RUnlock()
 
 	return result, nil
 }
@@ -217,29 +203,22 @@ func (c *Coterie) seal(block *types.Block, abort chan struct{}, found chan *type
 	var (
 		header = block.Header()
 	)
-	select {
-	case <-abort:
-		// Mining terminated, update stats and abort
-		log.Debug("Block sealing aborted")
+	// TODO implement the logic for the rounds here
+	log.Debug("GOV: before sealing to the header", "block", block.String())
+
+	// Add the authorisation signature to the block
+	if err := c.AuthoriseBlock(header); err != nil {
 		return
-	default:
-		// TODO implement the logic for the rounds here
-		log.Debug("GOV: before sealing to the header", "block", block.String())
+	}
 
-		// Add the authorisation signature to the block
-		if err := c.AuthoriseBlock(header); err != nil {
-			return
-		}
-
-		// Seal and return a block (if still needed)
-		select {
+	// Seal and return a block (if still needed)
+	select {
 		case found <- block.WithSeal(header):
 			log.Debug("Block sealed", "sealed block", found)
 		case <-abort:
 			log.Debug("Block sealed, but discarded")
-		}
-		return
 	}
+	return
 }
 
 // APIs returns the RPC APIs this consensus engine provides.
