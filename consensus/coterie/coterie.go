@@ -4,15 +4,17 @@ package coterie
 import (
 	"errors"
 	"sync"
-	"github.com/ethereum/go-ethereum/ethdb"
+	//"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/core/state"
+	//"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/log"
+	/*"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/ethdb"*/
 )
 
 var (
@@ -28,6 +30,7 @@ type DirectoryLocatorFn func() string
 // backing account. Copied from the clique implementation.
 type SignerFn func(account accounts.Account, passphrase string, hash []byte) ([]byte, error)
 
+/*
 type Coterie struct {
 	db     			ethdb.Database           // Database to store and retrieve x
 	minersWhitelist	*AuthorisedMinersWhitelist // Whitelist of miners governed by a smart contract
@@ -36,7 +39,9 @@ type Coterie struct {
 	dirLocFun		DirectoryLocatorFn        // Data directory location function
 	lock   			sync.RWMutex               // Protects the coterie fields
 }
+*/
 
+/*
 func New(dirLocFn DirectoryLocatorFn, db ethdb.Database) *Coterie {
 	return &Coterie{
 		dirLocFun: dirLocFn,
@@ -89,10 +94,10 @@ func (c *Coterie) VerifyHeaders(chain consensus.ChainReader, headers []*types.He
 func (c *Coterie) verifyHeader(chain consensus.ChainReader, header *types.Header, parents []*types.Header) error {
 	// TODO replace with proper validation (determine how much should be copied from Ethash)
 	// TODO check the seed value is correct
-
+	log.Debug("GOV: verifying the block's header")
 	return nil
 }
-
+*/
 // VerifyUncles verifies that the given block's uncles conform to the consensus
 // rules of a given engine.
 func (c *Coterie) VerifyUncles(chain consensus.ChainReader, block *types.Block) error {
@@ -102,7 +107,7 @@ func (c *Coterie) VerifyUncles(chain consensus.ChainReader, block *types.Block) 
 	}
 	return nil
 }
-
+/*
 // VerifySeal checks whether the crypto seal on a header is valid according to
 // the consensus rules of the given engine.
 func (c *Coterie) VerifySeal(chain consensus.ChainReader, header *types.Header) error {
@@ -122,6 +127,14 @@ func (c *Coterie) VerifySeal(chain consensus.ChainReader, header *types.Header) 
 // Prepare initializes the consensus fields of a block header according to the
 // rules of a particular engine. The changes are executed inline.
 func (c *Coterie) Prepare(chain consensus.ChainReader, header *types.Header) error {
+	chainsParent := chain.CurrentHeader().ParentHash
+	log.Debug("GOV: chain's parent hash", "hash", chainsParent)
+	parent := chain.GetHeader(header.ParentHash, header.Number.Uint64()-1)
+	log.Debug("GOV: the parent block header", "blockHeader", parent)
+	if chainsParent != parent.ParentHash {
+		log.Debug("GOV: mismatching headers")
+		return errors.New("parent hash mismatch on headers")
+	}
 	// TODO implement proper logic
 	return nil
 }
@@ -133,11 +146,13 @@ func (c *Coterie) Prepare(chain consensus.ChainReader, header *types.Header) err
 func (c *Coterie) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 	// TODO implement proper logic
 	return types.NewBlock(header, txs, nil, receipts), nil
-}
+}*/
 
 // Seal generates a new block for the given input block with the local miner's
 // seal place on top.
 func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-chan struct{}) (*types.Block, error) {
+	// c.lock.RLock()
+
 	log.Debug("GOV: seal start")
 	header := block.Header()
 
@@ -147,12 +162,11 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 		return nil, errInvalidBlock
 	}
 
-	// Don't hold the signer fields for the entire sealing procedure
-	c.lock.RLock()
-	signer := c.signer
-	c.lock.RUnlock()
-
 	// TODO implement proper logic
+
+	// Hold the signer fields for the entire sealing procedure
+	c.lock.Lock()
+	signer := c.signer
 
 	// First check to see if the node is part of the current coterie / block-creator set
 	partOfCoterie, err := partOfCurrentCoterie(header, signer)
@@ -162,23 +176,70 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 		// TODO clique returns an error here - look into the consequences of returning a custom error instead of nil
 		return nil, nil
 	}
+	c.lock.Unlock()
 
-	//
+	// Create a runner and the multiple search threads it directs
+	abort := make(chan struct{})
+	found := make(chan *types.Block)
+
+	threads := 1
+
+	var pend sync.WaitGroup
+	for i := 0; i < threads; i++ {
+		pend.Add(1)
+		go func() {
+			defer pend.Done()
+			c.seal(block, abort, found)
+		}()
+	}
+	// Wait until sealing is terminated or a nonce is found
+	var result *types.Block
 	select {
 	case <-stop:
-		return nil, nil
+		// Outside abort, stop all miner threads
+		close(abort)
+	case result = <-found:
+		// One of the threads found a block, abort all others
+		close(abort)
+	}
+	log.Debug("GOV: Waiting for all of the threads to complete")
+	// Wait for all miners to terminate and return the block
+	pend.Wait()
+	// c.lock.RUnlock()
+
+	return result, nil
+}
+
+// mine is the actual proof-of-work miner that searches for a nonce starting from
+// seed that results in correct final block difficulty.
+func (c *Coterie) seal(block *types.Block, abort chan struct{}, found chan *types.Block) {
+	// Extract some data from the header
+	var (
+		header = block.Header()
+	)
+	select {
+	case <-abort:
+		// Mining terminated, update stats and abort
+		log.Debug("Block sealing aborted")
+		return
 	default:
+		// TODO implement the logic for the rounds here
+		log.Debug("GOV: before sealing to the header", "block", block.String())
+
+		// Add the authorisation signature to the block
+		if err := c.AuthoriseBlock(header); err != nil {
+			return
+		}
+
+		// Seal and return a block (if still needed)
+		select {
+		case found <- block.WithSeal(header):
+			log.Debug("Block sealed", "sealed block", found)
+		case <-abort:
+			log.Debug("Block sealed, but discarded")
+		}
+		return
 	}
-
-	// TODO implement the logic for the rounds here
-	log.Debug("GOV: before sealing to the header", "block", block.String())
-
-	// Add the authorisation signature to the block
-	if err := c.AuthoriseBlock(header); err != nil {
-		return nil, err
-	}
-
-	return block.WithSeal(header), nil
 }
 
 // APIs returns the RPC APIs this consensus engine provides.

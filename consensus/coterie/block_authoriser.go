@@ -17,21 +17,23 @@ var (
 )
 
 func (c *Coterie) AuthoriseBlock(header *types.Header) (error) {
-	c.lock.RLock()
+	//c.lock.RLock()
+	c.lock.Lock()
 	signer, signFn := c.signer, c.signFn
-	c.lock.RUnlock()
+	//c.lock.RUnlock()
+	c.lock.Unlock()
 
-	password, err := c.retrieveSignerUnlockingCredentials()
+	/*password, err := c.retrieveSignerUnlockingCredentials()
 	if err != nil {
 		return err
 	}
-
+*/
 	hashToBeSigned := retrieveHashToBeSigned(header)
 	if hashToBeSigned == nil || len(hashToBeSigned) == 0 {
 		return ErrMissingHash
 	}
 
-	if sig, err := signFn(accounts.Account{Address: signer}, password, hashToBeSigned); err != nil {
+	if sig, err := signFn(accounts.Account{Address: signer}, "password123", hashToBeSigned); err != nil {
 		return err
 	} else {
 		header.SetExtendedHeader(sig)
@@ -40,9 +42,11 @@ func (c *Coterie) AuthoriseBlock(header *types.Header) (error) {
 }
 
 func (c *Coterie) retrieveSignerUnlockingCredentials() (string, error) {
-	c.lock.RLock()
+	// c.lock.RLock()
+	c.lock.Lock()
 	dirLocFn := c.dirLocFun
-	c.lock.RUnlock()
+	//c.lock.RUnlock()
+	c.lock.Unlock()
 
 	dirLoc := dirLocFn()
 
