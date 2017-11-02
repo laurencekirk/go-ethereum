@@ -39,7 +39,7 @@ func RetrieveBlockAuthor(header *types.Header) (common.Address, error) {
 		return common.Address{}, errors.New("Unable to verify a block with a missing parent hash.")
 	}
 	// Extract from the signature the public key that is paired with the private key; that was used to sign the block
-	publicKey, err := crypto.SigToPub(plaintext, header.ExtendedHeader[:])
+	publicKey, err := crypto.SigToPub(plaintext, header.ExtendedHeader.Signature[:])
 	if err != nil {
 		return common.Address{}, err
 	}
@@ -48,7 +48,7 @@ func RetrieveBlockAuthor(header *types.Header) (common.Address, error) {
 }
 
 func validateHeader(header *types.Header) error {
-	if header == nil || len(header.ExtendedHeader) == 0 {
+	if header == nil || header.ExtendedHeader == nil || len(header.ExtendedHeader.Signature) == 0 {
 		return errors.New("The Block is not correctly formatted: The Block, it's header and the extended header should not be nil")
 	} else {
 		return nil

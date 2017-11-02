@@ -211,6 +211,8 @@ func (c *Coterie) seal(block *types.Block, abort chan struct{}, found chan *type
 		return
 	}
 
+	log.Debug("GOV: sealed the block", "block", block)
+
 	// Seal and return a block (if still needed)
 	select {
 		case found <- block.WithSeal(header):

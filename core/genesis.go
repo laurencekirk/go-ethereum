@@ -245,6 +245,10 @@ func (g *Genesis) ToBlock() (*types.Block, *state.StateDB) {
 		MixDigest:  g.Mixhash,
 		Coinbase:   g.Coinbase,
 		Root:       root,
+		ExtendedHeader: &types.ExtendedHeader{
+			Seed: new(big.Int).SetInt64(0),
+			Signature: types.Signature{},
+		},
 	}
 	if g.GasLimit == 0 {
 		head.GasLimit = params.GenesisGasLimit
