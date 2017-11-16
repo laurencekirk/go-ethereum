@@ -191,6 +191,7 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 		case result = <-found:
 			// One of the threads found a block, abort all others
 			close(abort)
+			return c.secondLayerConsensusEngine.Seal(chain, result, stop)
 	}
 
 	return result, nil

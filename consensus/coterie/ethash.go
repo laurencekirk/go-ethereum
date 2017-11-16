@@ -37,6 +37,7 @@ import (
 	//"github.com/ethereum/go-ethereum/rpc"
 	metrics "github.com/rcrowley/go-metrics"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/consensus"
 )
 
 /*var ErrInvalidDumpMagic = errors.New("invalid dump magic")
@@ -361,11 +362,13 @@ type Coterie struct {
 	dirLocFun		DirectoryLocatorFn        // Data directory location function
 	minersWhitelist	*AuthorisedMinersWhitelist // Whitelist of miners governed by a smart contract
 
+	secondLayerConsensusEngine	consensus.Engine // Another consensus engine e.g. Ethash PoW engine that this consensus engine 'extends' and can call into.
+
 	lock sync.Mutex // Ensures thread safety for the in-memory caches and mining fields
 }
 
 // New creates a full sized ethash PoW scheme.
-func New(cachedir string, cachesinmem, cachesondisk int, dagdir string, dagsinmem, dagsondisk int) *Coterie {
+func New(cachedir string, cachesinmem, cachesondisk int, dagdir string, dagsinmem, dagsondisk int, deferTo consensus.Engine) *Coterie {
 	if cachesinmem <= 0 {
 		log.Warn("One ethash cache must always be in memory", "requested", cachesinmem)
 		cachesinmem = 1
@@ -387,6 +390,7 @@ func New(cachedir string, cachesinmem, cachesondisk int, dagdir string, dagsinme
 		//datasets:     make(map[uint64]*dataset),
 		update:       make(chan struct{}),
 		hashrate:     metrics.NewMeter(),
+		secondLayerConsensusEngine: deferTo,
 	}
 }
 

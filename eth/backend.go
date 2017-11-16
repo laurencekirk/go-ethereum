@@ -220,9 +220,13 @@ func CreateConsensusEngine(ctx *node.ServiceContext, config *Config, chainConfig
 	}
 	// If Coterie is requested, set it up
 	if chainConfig.Coterie != nil {
+
+		engine := ethash.New(ctx.ResolvePath(config.EthashCacheDir), config.EthashCachesInMem, config.EthashCachesOnDisk,
+			config.EthashDatasetDir, config.EthashDatasetsInMem, config.EthashDatasetsOnDisk)
+
 		// return coterie.New(ctx.GetDataDir, db)
 		return coterie.New(ctx.ResolvePath(config.EthashCacheDir), config.EthashCachesInMem, config.EthashCachesOnDisk,
-			config.EthashDatasetDir, config.EthashDatasetsInMem, config.EthashDatasetsOnDisk)
+			config.EthashDatasetDir, config.EthashDatasetsInMem, config.EthashDatasetsOnDisk, engine)
 	}
 	// Otherwise assume proof-of-work
 	switch {
