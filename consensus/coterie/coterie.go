@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 	/*"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethdb"*/
+	"math/big"
 )
 
 var (
@@ -168,6 +169,9 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 	signer := c.signer
 	c.lock.Unlock()
 
+	// We'll need information from the parent header (such as the seed)
+	parentBlockHeader := GetParentBlockHeader(chain, block)
+
 	// First check to see if the node is part of the current coterie / block-creator set
 	partOfCoterie, err := partOfCurrentCoterie(header, signer)
 	if err != nil {
@@ -177,51 +181,49 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 		return nil, nil
 	}
 
-	// Create a runner and the multiple search threads it directs
-	abort := make(chan struct{})
-	found := make(chan *types.Block)
-
-	go c.seal(block, abort, found)
-	// Wait until sealing is terminated or a nonce is found
-	var result *types.Block
-	select {
-		case <-stop:
-			// Outside abort, stop all miner threads
-			close(abort)
-		case result = <-found:
-			// One of the threads found a block, abort all others
-			close(abort)
-			return c.secondLayerConsensusEngine.Seal(chain, result, stop)
+	sealedBlock, err := c.seal(block)
+	if err != nil {
+		return nil, err
 	}
 
-	return result, nil
+	blockWithSeed, err := addNextSeed(parentBlockHeader.ExtendedHeader, sealedBlock)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.secondLayerConsensusEngine.Seal(chain, blockWithSeed, stop)
 }
 
+func GetParentBlockHeader(chain consensus.ChainReader, block *types.Block) (*types.Header) {
+	childHeader := block.Header()
+	childBlockNumber := childHeader.Number.Uint64();
+	return chain.GetHeader(childHeader.ParentHash, childBlockNumber-1)
+}
+
+//TODO figure out if this needs to be changed once the hash for the committee is known
 // mine is the actual proof-of-work miner that searches for a nonce starting from
 // seed that results in correct final block difficulty.
-func (c *Coterie) seal(block *types.Block, abort chan struct{}, found chan *types.Block) {
-	// Extract some data from the header
-	var (
-		header = block.Header()
-	)
-	// TODO implement the logic for the rounds here
+func (c *Coterie) seal(block *types.Block) (*types.Block, error) {
+	header := block.Header()
 	log.Debug("GOV: before sealing to the header", "block", block.String())
 
 	// Add the authorisation signature to the block
 	if err := c.AuthoriseBlock(header); err != nil {
-		return
+		return nil, err
 	}
-
-	log.Debug("GOV: sealed the block", "block", block)
 
 	// Seal and return a block (if still needed)
-	select {
-		case found <- block.WithSeal(header):
-			log.Debug("Block sealed", "sealed block", found)
-		case <-abort:
-			log.Debug("Block sealed, but discarded")
-	}
-	return
+	return block.WithSeal(header), nil
+}
+
+func addNextSeed(parentBlockHeader *types.ExtendedHeader, block *types.Block) (*types.Block, error) {
+	header := block.Header()
+	parentSeed := parentBlockHeader.Seed
+
+	// TODO implement the correct logic here
+	header.ExtendedHeader.Seed = new(big.Int).Add(parentSeed, big.NewInt(1))
+
+	return block.WithSeal(header), nil
 }
 
 // APIs returns the RPC APIs this consensus engine provides.
