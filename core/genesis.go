@@ -245,10 +245,6 @@ func (g *Genesis) ToBlock() (*types.Block, *state.StateDB) {
 		MixDigest:  g.Mixhash,
 		Coinbase:   g.Coinbase,
 		Root:       root,
-		ExtendedHeader: &types.ExtendedHeader{
-			Seed: new(big.Int).SetInt64(0),
-			Signature: types.Signature{},
-		},
 	}
 	if g.GasLimit == 0 {
 		head.GasLimit = params.GenesisGasLimit
@@ -256,6 +252,17 @@ func (g *Genesis) ToBlock() (*types.Block, *state.StateDB) {
 	if g.Difficulty == nil {
 		head.Difficulty = params.GenesisDifficulty
 	}
+
+	// Coterie-specific logic
+	if g.Config.Coterie != nil {
+		// Retrieve the seed from the genesis configuration
+		genesisSeed := g.Config.Coterie.Seed
+		head.ExtendedHeader = &types.ExtendedHeader{
+			Seed: new(big.Int).SetUint64(genesisSeed),
+			Signature: types.Signature{},
+		}
+	}
+
 	return types.NewBlock(head, nil, nil, nil), statedb
 }
 

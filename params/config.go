@@ -137,6 +137,7 @@ func (c *CliqueConfig) String() string {
 }
 
 type CoterieConfig struct {
+	Seed uint64 `json:"seed"` // Initial seed to be used for the random committee selection.
 }
 
 // String implements the stringer interface, returning the consensus engine details.
