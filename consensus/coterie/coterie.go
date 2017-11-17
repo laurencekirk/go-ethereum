@@ -173,10 +173,10 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 	parentBlockHeader := GetParentBlockHeader(chain, block)
 
 	// First check to see if the node is part of the current coterie / block-creator set
-	partOfCoterie, err := partOfCurrentCoterie(header, signer)
+	inCommittee, err := c.selectedForCurrentCommittee(parentBlockHeader, signer)
 	if err != nil {
 		return nil, err
-	} else if ! partOfCoterie {
+	} else if ! inCommittee {
 		// TODO clique returns an error here - look into the consequences of returning a custom error instead of nil
 		return nil, nil
 	}
