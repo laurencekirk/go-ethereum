@@ -101,11 +101,8 @@ func (c *Coterie) verifyHeader(chain consensus.ChainReader, header *types.Header
 // VerifyUncles verifies that the given block's uncles conform to the consensus
 // rules of a given engine.
 func (c *Coterie) VerifyUncles(chain consensus.ChainReader, block *types.Block) error {
-	// Same as the Clique consensus - we don't expect there to be any uncles
-	if len(block.Uncles()) > 0 {
-		return errors.New("uncles not allowed")
-	}
-	return nil
+	// Defer to the PoW verification
+	return c.secondLayerConsensusEngine.VerifyUncles(chain, block)
 }
 /*
 // VerifySeal checks whether the crypto seal on a header is valid according to
@@ -205,7 +202,6 @@ func GetParentBlockHeader(chain consensus.ChainReader, block *types.Block) (*typ
 // seed that results in correct final block difficulty.
 func (c *Coterie) seal(block *types.Block) (*types.Block, error) {
 	header := block.Header()
-	log.Debug("GOV: before sealing to the header", "block", block.String())
 
 	// Add the authorisation signature to the block
 	if err := c.AuthoriseBlock(header); err != nil {
