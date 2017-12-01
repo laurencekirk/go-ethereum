@@ -13,10 +13,10 @@ import (
 )
 
 // AuthorisedMinersWhitelistABI is the input ABI used to generate the binding from.
-const AuthorisedMinersWhitelistABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"miner\",\"type\":\"address\"}],\"name\":\"isAuthorisedMiner\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"miner\",\"type\":\"address\"}],\"name\":\"removeMinersAuthorisation\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"miner\",\"type\":\"address\"}],\"name\":\"authoriseMiner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const AuthorisedMinersWhitelistABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"size\",\"outputs\":[{\"name\":\"\",\"type\":\"uint32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"miner\",\"type\":\"address\"}],\"name\":\"isAuthorisedMiner\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"miner\",\"type\":\"address\"}],\"name\":\"removeMinersAuthorisation\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"miner\",\"type\":\"address\"}],\"name\":\"authoriseMiner\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"miner\",\"type\":\"address\"}],\"name\":\"AddedToWhitelist\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"miner\",\"type\":\"address\"}],\"name\":\"RemovedFromWhitelist\",\"type\":\"event\"}]"
 
 // AuthorisedMinersWhitelistBin is the compiled bytecode used for deploying new contracts.
-const AuthorisedMinersWhitelistBin = `0x6060604052341561000f57600080fd5b61015d8061001e6000396000f3006060604052600436106100565763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663a0cc5ebe811461005b578063b9a7548b1461008e578063f045bebb146100af575b600080fd5b341561006657600080fd5b61007a600160a060020a03600435166100ce565b604051901515815260200160405180910390f35b341561009957600080fd5b6100ad600160a060020a03600435166100ec565b005b34156100ba57600080fd5b6100ad600160a060020a036004351661010d565b600160a060020a031660009081526020819052604090205460ff1690565b600160a060020a03166000908152602081905260409020805460ff19169055565b600160a060020a03166000908152602081905260409020805460ff191660011790555600a165627a7a7230582027869c14686f7319027ed81c6df6ec7daab5e9eec3d48d000ea04487b08207140029`
+const AuthorisedMinersWhitelistBin = `0x6060604052341561000f57600080fd5b6102a88061001e6000396000f3006060604052600436106100615763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663949d225d8114610066578063a0cc5ebe14610092578063b9a7548b146100c5578063f045bebb146100e6575b600080fd5b341561007157600080fd5b610079610105565b60405163ffffffff909116815260200160405180910390f35b341561009d57600080fd5b6100b1600160a060020a0360043516610111565b604051901515815260200160405180910390f35b34156100d057600080fd5b6100e4600160a060020a036004351661012f565b005b34156100f157600080fd5b6100e4600160a060020a03600435166101d4565b60005463ffffffff1681565b600160a060020a031660009081526001602052604090205460ff1690565b600160a060020a03811660009081526001602052604090205460ff16151561015657600080fd5b600160a060020a038116600090815260016020526040808220805460ff19169055815463ffffffff19811663ffffffff91821660001901909116179091557fcdd2e9b91a56913d370075169cefa1602ba36be5301664f752192bb1709df75790829051600160a060020a03909116815260200160405180910390a150565b600160a060020a03811660009081526001602052604090205460ff16156101fa57600080fd5b600160a060020a0381166000908152600160208190526040808320805460ff191683179055825463ffffffff19811663ffffffff91821690930116919091179091557fa850ae9193f515cbae8d35e8925bd2be26627fc91bce650b8652ed254e9cab0390829051600160a060020a03909116815260200160405180910390a1505600a165627a7a72305820cb572b105465b4eaef6b4529eb5a5b21b983bf2d02b320829188dde7694ef0bc0029`
 
 // DeployAuthorisedMinersWhitelist deploys a new Ethereum contract, binding an instance of AuthorisedMinersWhitelist to it.
 func DeployAuthorisedMinersWhitelist(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *AuthorisedMinersWhitelist, error) {
@@ -182,6 +182,32 @@ func (_AuthorisedMinersWhitelist *AuthorisedMinersWhitelistSession) IsAuthorised
 // Solidity: function isAuthorisedMiner(miner address) constant returns(bool)
 func (_AuthorisedMinersWhitelist *AuthorisedMinersWhitelistCallerSession) IsAuthorisedMiner(miner common.Address) (bool, error) {
 	return _AuthorisedMinersWhitelist.Contract.IsAuthorisedMiner(&_AuthorisedMinersWhitelist.CallOpts, miner)
+}
+
+// Size is a free data retrieval call binding the contract method 0x949d225d.
+//
+// Solidity: function size() constant returns(uint32)
+func (_AuthorisedMinersWhitelist *AuthorisedMinersWhitelistCaller) Size(opts *bind.CallOpts) (uint32, error) {
+	var (
+		ret0 = new(uint32)
+	)
+	out := ret0
+	err := _AuthorisedMinersWhitelist.contract.Call(opts, out, "size")
+	return *ret0, err
+}
+
+// Size is a free data retrieval call binding the contract method 0x949d225d.
+//
+// Solidity: function size() constant returns(uint32)
+func (_AuthorisedMinersWhitelist *AuthorisedMinersWhitelistSession) Size() (uint32, error) {
+	return _AuthorisedMinersWhitelist.Contract.Size(&_AuthorisedMinersWhitelist.CallOpts)
+}
+
+// Size is a free data retrieval call binding the contract method 0x949d225d.
+//
+// Solidity: function size() constant returns(uint32)
+func (_AuthorisedMinersWhitelist *AuthorisedMinersWhitelistCallerSession) Size() (uint32, error) {
+	return _AuthorisedMinersWhitelist.Contract.Size(&_AuthorisedMinersWhitelist.CallOpts)
 }
 
 // AuthoriseMiner is a paid mutator transaction binding the contract method 0xf045bebb.

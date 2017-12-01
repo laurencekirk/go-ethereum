@@ -2,8 +2,8 @@ pragma solidity ^0.4.18;
 
 contract AuthorisedMinersWhitelist {
 
-    mapping(address => bool) whitelist;
     uint32 public size;
+    mapping(address => bool) whitelist;
 
     event AddedToWhitelist(address miner);
     event RemovedFromWhitelist(address miner);
