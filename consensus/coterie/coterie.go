@@ -3,19 +3,17 @@ package coterie
 
 import (
 	"errors"
-	//"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	//"github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/log"
-	/*"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/ethdb"*/
 	"math/big"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"sync"
 )
 
 var (
@@ -32,34 +30,35 @@ type DirectoryLocatorFn func() string
 // type SignerFn func(account accounts.Account, passphrase string, hash []byte) ([]byte, error)
 type SignerFn func(account accounts.Account, hash []byte) ([]byte, error)
 
-/*
-type Coterie struct {
-	db     			ethdb.Database           // Database to store and retrieve x
-	minersWhitelist	*AuthorisedMinersWhitelist // Whitelist of miners governed by a smart contract
-	signer 			common.Address           // Ethereum address of the signing key
-	signFn 			SignerFn                 // Signer function to authorize hashes with
-	dirLocFun		DirectoryLocatorFn        // Data directory location function
-	lock   			sync.RWMutex               // Protects the coterie fields
-}
-*/
 
-/*
-func New(dirLocFn DirectoryLocatorFn, db ethdb.Database) *Coterie {
+type Coterie struct {
+	signer 						common.Address           // Ethereum address of the signing key
+	signFn 						SignerFn                 // Signer function to authorize hashes with
+	ks 							*keystore.KeyStore
+	dirLocFun					DirectoryLocatorFn        // Data directory location function
+	minersWhitelist				*AuthorisedMinersWhitelist // Whitelist of miners governed by a smart contract
+
+	secondLayerConsensusEngine	consensus.Engine // Another consensus engine e.g. Ethash PoW engine that this consensus engine 'extends' and can call into.
+
+	lock sync.Mutex // Ensures thread safety for the in-memory caches and mining fields
+}
+
+func New(deferTo consensus.Engine, dirLocFn DirectoryLocatorFn) *Coterie {
 	return &Coterie{
 		dirLocFun: dirLocFn,
-		db:	db,
+		secondLayerConsensusEngine:	deferTo,
 	}
 }
 
 // Consensus - Engine - interface implementation
-*/
+
 // Author retrieves the Ethereum address of the account that minted the given
 // block, which may be different from the header's coinbase if a consensus
 // engine is based on signatures.
 func (c *Coterie) Author(header *types.Header) (common.Address, error) {
 	return RetrieveBlockAuthor(header)
 }
-/*
+
 // VerifyHeader checks whether a header conforms to the consensus rules of a
 // given engine. Verifying the seal may be done optionally here, or explicitly
 // via the VerifySeal method.
@@ -72,21 +71,8 @@ func (c *Coterie) VerifyHeader(chain consensus.ChainReader, header *types.Header
 // a results channel to retrieve the async verifications (the order is that of
 // the input slice).
 func (c *Coterie) VerifyHeaders(chain consensus.ChainReader, headers []*types.Header, seals []bool) (chan<- struct{}, <-chan error) {
-	abort := make(chan struct{})
-	results := make(chan error, len(headers))
 
-	go func() {
-		for i, header := range headers {
-			err := c.verifyHeader(chain, header, headers[:i])
-
-			select {
-			case <-abort:
-				return
-			case results <- err:
-			}
-		}
-	}()
-	return abort, results
+	return c.secondLayerConsensusEngine.VerifyHeaders(chain, headers, seals)
 }
 
 // verifyHeader checks whether a header conforms to the consensus rules.The
@@ -97,16 +83,18 @@ func (c *Coterie) verifyHeader(chain consensus.ChainReader, header *types.Header
 	// TODO replace with proper validation (determine how much should be copied from Ethash)
 	// TODO check the seed value is correct
 	log.Debug("GOV: verifying the block's header")
+
+
 	return nil
 }
-*/
+
 // VerifyUncles verifies that the given block's uncles conform to the consensus
 // rules of a given engine.
 func (c *Coterie) VerifyUncles(chain consensus.ChainReader, block *types.Block) error {
 	// Defer to the PoW verification
 	return c.secondLayerConsensusEngine.VerifyUncles(chain, block)
 }
-/*
+
 // VerifySeal checks whether the crypto seal on a header is valid according to
 // the consensus rules of the given engine.
 func (c *Coterie) VerifySeal(chain consensus.ChainReader, header *types.Header) error {
@@ -114,28 +102,20 @@ func (c *Coterie) VerifySeal(chain consensus.ChainReader, header *types.Header) 
 
 	// TODO confirm that this is the correct location for this logic (it is added when we create a seal, so verification here currently seems to make sense)
 	// Retrieve the public key of the miner that created the block and verify that they are eligible to create the block (that there are in the whitelist)
-	if valid, err := VerifyBlockAuthenticity(c.minersWhitelist, header); err != nil {
+	/*if valid, err := VerifyBlockAuthenticity(c.minersWhitelist, header); err != nil {
 		return err
 	} else if !valid {
 		return ErrInvalidAuth
 	}
-
-	return nil
+*/
+	return c.secondLayerConsensusEngine.VerifySeal(chain, header)
 }
 
 // Prepare initializes the consensus fields of a block header according to the
 // rules of a particular engine. The changes are executed inline.
 func (c *Coterie) Prepare(chain consensus.ChainReader, header *types.Header) error {
-	chainsParent := chain.CurrentHeader().ParentHash
-	log.Debug("GOV: chain's parent hash", "hash", chainsParent)
-	parent := chain.GetHeader(header.ParentHash, header.Number.Uint64()-1)
-	log.Debug("GOV: the parent block header", "blockHeader", parent)
-	if chainsParent != parent.ParentHash {
-		log.Debug("GOV: mismatching headers")
-		return errors.New("parent hash mismatch on headers")
-	}
 	// TODO implement proper logic
-	return nil
+	return c.secondLayerConsensusEngine.Prepare(chain, header)
 }
 
 // Finalize runs any post-transaction state modifications (e.g. block rewards)
@@ -144,8 +124,8 @@ func (c *Coterie) Prepare(chain consensus.ChainReader, header *types.Header) err
 // consensus rules that happen at finalization (e.g. block rewards).
 func (c *Coterie) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 	// TODO implement proper logic
-	return types.NewBlock(header, txs, nil, receipts), nil
-}*/
+	return c.secondLayerConsensusEngine.Finalize(chain, header, state, txs, uncles, receipts)
+}
 
 // Seal generates a new block for the given input block with the local miner's
 // seal place on top.
@@ -199,6 +179,14 @@ func GetParentBlockHeader(chain consensus.ChainReader, block *types.Block) (*typ
 	return chain.GetHeader(childHeader.ParentHash, childBlockNumber-1)
 }
 
+// APIs returns the RPC APIs this consensus engine provides.
+func (c *Coterie) APIs(chain consensus.ChainReader) []rpc.API {
+	// TODO implement proper logic
+	return nil
+}
+
+// Coterie-specific functions / methods
+
 //TODO figure out if this needs to be changed once the hash for the committee is known
 // mine is the actual proof-of-work miner that searches for a nonce starting from
 // seed that results in correct final block difficulty.
@@ -224,14 +212,6 @@ func addNextSeed(parentBlockHeader *types.ExtendedHeader, block *types.Block) (*
 	return block.WithSeal(header), nil
 }
 
-// APIs returns the RPC APIs this consensus engine provides.
-func (c *Coterie) APIs(chain consensus.ChainReader) []rpc.API {
-	// TODO implement proper logic
-	return nil
-}
-
-// Coterie-specific functions / methods
-
 // Instantiates the miners whitelist and makes the consensus engine aware of it
 func (c *Coterie) SetAuthorisedMinersWhitelist(contractBackend bind.ContractBackend) (error) {
 	if c.minersWhitelist == nil {
@@ -244,8 +224,7 @@ func (c *Coterie) SetAuthorisedMinersWhitelist(contractBackend bind.ContractBack
 	return nil
 }
 
-// Authorize injects a private key into the consensus engine to mint new blocks
-// with.
+// Authorize injects a private key into the consensus engine to mint new blocks with.
 func (c *Coterie) Authorize(signer common.Address, signFn SignerFn, ks *keystore.KeyStore) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
