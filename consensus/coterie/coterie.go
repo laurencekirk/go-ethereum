@@ -15,6 +15,7 @@ import (
 	/*"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethdb"*/
 	"math/big"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 )
 
 var (
@@ -28,7 +29,8 @@ type DirectoryLocatorFn func() string
 
 // SignerFn is a signer callback function to request a hash to be signed by a
 // backing account. Copied from the clique implementation.
-type SignerFn func(account accounts.Account, passphrase string, hash []byte) ([]byte, error)
+// type SignerFn func(account accounts.Account, passphrase string, hash []byte) ([]byte, error)
+type SignerFn func(account accounts.Account, hash []byte) ([]byte, error)
 
 /*
 type Coterie struct {
@@ -244,10 +246,11 @@ func (c *Coterie) SetAuthorisedMinersWhitelist(contractBackend bind.ContractBack
 
 // Authorize injects a private key into the consensus engine to mint new blocks
 // with.
-func (c *Coterie) Authorize(signer common.Address, signFn SignerFn) {
+func (c *Coterie) Authorize(signer common.Address, signFn SignerFn, ks *keystore.KeyStore) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
 	c.signer = signer
 	c.signFn = signFn
+	c.ks = ks
 }

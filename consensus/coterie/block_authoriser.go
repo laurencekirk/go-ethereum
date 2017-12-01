@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"errors"
 	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/log"
 )
 
 const PASSWORD_FILE_NAME string = "coinbasepwd"
@@ -23,35 +24,28 @@ func (c *Coterie) AuthoriseBlock(header *types.Header) (error) {
 	//c.lock.RUnlock()
 	c.lock.Unlock()
 
-	/*password, err := c.retrieveSignerUnlockingCredentials()
-	if err != nil {
-		return err
-	}
-*/
 	hashToBeSigned := retrieveHashToBeSigned(header)
 	if hashToBeSigned == nil || len(hashToBeSigned) == 0 {
 		return ErrMissingHash
 	}
 
-	// TODO remove hacky code and replace it with the previously working code
-	sig, err := signFn(accounts.Account{Address: signer}, "password123", hashToBeSigned)
-
+	password, err := c.retrieveSignerUnlockingCredentials()
 	if err != nil {
-		sig, err = signFn(accounts.Account{Address: signer}, "passw0rd!", hashToBeSigned)
-		if err != nil {
-			sig, err = signFn(accounts.Account{Address: signer}, "1234567890", hashToBeSigned)
-			if err != nil {
-				sig, err = signFn(accounts.Account{Address: signer}, "correcthorsebatterystaple", hashToBeSigned)
-				if err != nil {
-					sig, err = signFn(accounts.Account{Address: signer}, "Tr0ub4dor&3", hashToBeSigned)
-					if err != nil {
-						return err
-					}
-				}
-			}
-		}
+		return err
 	}
+	defer zeroPassword(&password)
 
+	signingAccount := accounts.Account{Address: signer}
+
+	if err:= c.ks.Unlock(signingAccount , password); err != nil {
+		return err
+	}
+	defer c.ks.Lock(signer)
+
+	sig, err := signFn(signingAccount, hashToBeSigned)
+	if err != nil {
+		return err
+	}
 
 	header.SetExtendedHeader(sig)
 	return nil
@@ -70,6 +64,8 @@ func (c *Coterie) retrieveSignerUnlockingCredentials() (string, error) {
 		return "", ErrIncorrectDataDir
 	}
 	pwdFilePath := dirLoc + string(os.PathSeparator) + PASSWORD_FILE_NAME
+
+	log.Debug("GOV: Path to the password file determined as ", "path", pwdFilePath)
 
 	if coinbasePwd, err := readPasswordFromFile(pwdFilePath); err != nil {
 		return "", err
@@ -91,4 +87,8 @@ func readPasswordFromFile(filePath string) (string, error) {
 
 func retrieveHashToBeSigned(header *types.Header) []byte {
 	return header.ParentHash[:]
+}
+
+func zeroPassword(p *string) {
+	*p = ""
 }

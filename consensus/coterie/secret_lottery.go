@@ -22,7 +22,7 @@ func (c *Coterie) selectedForCurrentCommittee(parentHeader *types.Header, signer
 
 func (c *Coterie) hasBeenSelectedToCommittee(signer common.Address, seed *big.Int) (bool, error) {
 	// TODO implement the proper logic
-	totalNumberOfNodes := 3
+	totalNumberOfNodes := 2
 	log.Info("GOV: the number of nodes in the lottery is", "number", totalNumberOfNodes)
 	lotteryTicketNumber := rand.Intn(totalNumberOfNodes)
 	log.Info("GOV: the ticket number is", "number", lotteryTicketNumber)

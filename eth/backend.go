@@ -49,6 +49,7 @@ import (
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 )
 
 type LesServer interface {
@@ -226,7 +227,7 @@ func CreateConsensusEngine(ctx *node.ServiceContext, config *Config, chainConfig
 
 		// return coterie.New(ctx.GetDataDir, db)
 		return coterie.New(ctx.ResolvePath(config.EthashCacheDir), config.EthashCachesInMem, config.EthashCachesOnDisk,
-			config.EthashDatasetDir, config.EthashDatasetsInMem, config.EthashDatasetsOnDisk, engine)
+			config.EthashDatasetDir, config.EthashDatasetsInMem, config.EthashDatasetsOnDisk, engine, ctx.GetDataDir)
 	}
 	// Otherwise assume proof-of-work
 	switch {
@@ -353,8 +354,9 @@ func (s *Ethereum) StartMining(local bool) error {
 			log.Error("Etherbase account unavailable locally", "err", err)
 			return fmt.Errorf("singer missing: %v", err)
 		}
-		log.Debug("GOV: setting the dir location function", "func", wallet.SignHashWithPassphrase)
-		coterie.Authorize(eb, wallet.SignHashWithPassphrase)
+		log.Debug("GOV: setting the signing function", "func", wallet.SignHash)
+		ks := s.accountManager.Backends(keystore.KeyStoreType)[0].(*keystore.KeyStore)
+		coterie.Authorize(eb, wallet.SignHash, ks)
 	}
 	if local {
 		// If local (CPU) mining is started, we can disable the transaction rejection

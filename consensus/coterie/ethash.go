@@ -38,6 +38,7 @@ import (
 	metrics "github.com/rcrowley/go-metrics"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 )
 
 /*var ErrInvalidDumpMagic = errors.New("invalid dump magic")
@@ -359,6 +360,7 @@ type Coterie struct {
 
 	signer 			common.Address           // Ethereum address of the signing key
 	signFn 			SignerFn                 // Signer function to authorize hashes with
+	ks 				*keystore.KeyStore
 	dirLocFun		DirectoryLocatorFn        // Data directory location function
 	minersWhitelist	*AuthorisedMinersWhitelist // Whitelist of miners governed by a smart contract
 
@@ -368,7 +370,7 @@ type Coterie struct {
 }
 
 // New creates a full sized ethash PoW scheme.
-func New(cachedir string, cachesinmem, cachesondisk int, dagdir string, dagsinmem, dagsondisk int, deferTo consensus.Engine) *Coterie {
+func New(cachedir string, cachesinmem, cachesondisk int, dagdir string, dagsinmem, dagsondisk int, deferTo consensus.Engine, dirLocFn DirectoryLocatorFn) *Coterie {
 	if cachesinmem <= 0 {
 		log.Warn("One ethash cache must always be in memory", "requested", cachesinmem)
 		cachesinmem = 1
@@ -390,6 +392,7 @@ func New(cachedir string, cachesinmem, cachesondisk int, dagdir string, dagsinme
 		//datasets:     make(map[uint64]*dataset),
 		update:       make(chan struct{}),
 		hashrate:     metrics.NewMeter(),
+		dirLocFun:					dirLocFn,
 		secondLayerConsensusEngine: deferTo,
 	}
 }
