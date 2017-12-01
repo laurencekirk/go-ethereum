@@ -29,18 +29,17 @@ func (c *Coterie) AuthoriseBlock(header *types.Header) (error) {
 		return ErrMissingHash
 	}
 
-	password, err := c.retrieveSignerUnlockingCredentials()
+	signingAccount := accounts.Account{Address: signer}
+	/*password, err := c.retrieveSignerUnlockingCredentials()
 	if err != nil {
 		return err
 	}
 	defer zeroPassword(&password)
 
-	signingAccount := accounts.Account{Address: signer}
-
 	if err:= c.ks.Unlock(signingAccount , password); err != nil {
 		return err
 	}
-	defer c.ks.Lock(signer)
+	defer c.ks.Lock(signer)*/
 
 	sig, err := signFn(signingAccount, hashToBeSigned)
 	if err != nil {
