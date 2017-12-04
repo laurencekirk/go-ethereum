@@ -123,6 +123,9 @@ func (c *Coterie) Prepare(chain consensus.ChainReader, header *types.Header) err
 // Note: The block header and state database might be updated to reflect any
 // consensus rules that happen at finalization (e.g. block rewards).
 func (c *Coterie) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
+	if header.ExtendedHeader == nil {
+		header.ExtendedHeader = &types.ExtendedHeader{}
+	}
 	// TODO implement proper logic
 	return c.secondLayerConsensusEngine.Finalize(chain, header, state, txs, uncles, receipts)
 }
