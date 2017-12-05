@@ -8,6 +8,8 @@ import (
 	"errors"
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/crypto"
+	"math/big"
 )
 
 const PASSWORD_FILE_NAME string = "coinbasepwd"
@@ -17,14 +19,16 @@ var (
 	ErrMissingHash		= errors.New("unable to authenticate a block with a missing parent hash")
 )
 
-func (c *Coterie) AuthoriseBlock(header *types.Header) (error) {
+func (c *Coterie) AuthoriseBlock(parentHeader *types.Header, header *types.Header) (error) {
+	log.Debug("GOV: the header", "header", header)
+
 	//c.lock.RLock()
 	c.lock.Lock()
 	signer, signFn := c.signer, c.signFn
 	//c.lock.RUnlock()
 	c.lock.Unlock()
 
-	hashToBeSigned := retrieveHashToBeSigned(header)
+	hashToBeSigned := retrieveHashToBeSigned(parentHeader, header, BlockProducer)
 	if hashToBeSigned == nil || len(hashToBeSigned) == 0 {
 		return ErrMissingHash
 	}
@@ -45,6 +49,8 @@ func (c *Coterie) AuthoriseBlock(header *types.Header) (error) {
 	if err != nil {
 		return err
 	}
+
+	log.Debug("GOV: the signature", "signature", sig)
 
 	header.SetExtendedHeader(sig)
 	return nil
@@ -84,8 +90,24 @@ func readPasswordFromFile(filePath string) (string, error) {
 	return strings.TrimRight(lines[0], "\r"), nil
 }
 
-func retrieveHashToBeSigned(header *types.Header) []byte {
-	return header.ParentHash[:]
+/*
+ * We require a 32 bit length string for the ECDSA signing function - this function assembles the known parts of a block, for a given 'task',
+ * that will be used to create the fixed length string / hash.
+ */
+func retrieveHashToBeSigned(parentHeader *types.Header, header *types.Header, task ConsensusTask) []byte {
+	switch task {
+		case BlockProducer:
+			seed := parentHeader.ExtendedHeader.Seed
+			round := header.Number
+			taskBytes := big.NewInt(int64(task)).Bytes()
+			data := append(round.Bytes()[:], taskBytes[:]...)
+			data = append(data[:], seed.Bytes()[:]...)
+			hash := crypto.Keccak256Hash(data)
+			return hash[:]
+		default:
+			log.Warn("GOV: retrieving of the hash for the task has not been implemented yet", "task", task)
+			return nil
+	}
 }
 
 func zeroPassword(p *string) {

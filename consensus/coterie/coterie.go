@@ -35,8 +35,9 @@ type Coterie struct {
 	signer 						common.Address           // Ethereum address of the signing key
 	signFn 						SignerFn                 // Signer function to authorize hashes with
 	ks 							*keystore.KeyStore
-	dirLocFun					DirectoryLocatorFn        // Data directory location function
-	minersWhitelist				*AuthorisedMinersWhitelist // Whitelist of miners governed by a smart contract
+	dirLocFun					DirectoryLocatorFn          // Data directory location function
+	minersWhitelist				*AuthorisedMinersWhitelist  // Whitelist of miners governed by a smart contract
+	consensusParameters			*ConsensusParameters		// Smart contract which controls some of the consensus parameters
 
 	secondLayerConsensusEngine	consensus.Engine // Another consensus engine e.g. Ethash PoW engine that this consensus engine 'extends' and can call into.
 
@@ -136,10 +137,10 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 	// c.lock.RLock()
 
 	log.Debug("GOV: seal start")
-	header := block.Header()
+	currentBlockHeader := block.Header()
 
 	// Sealing the genesis block is not supported
-	number := header.Number.Uint64()
+	number := currentBlockHeader.Number.Uint64()
 	if number == 0 {
 		return nil, errInvalidBlock
 	}
@@ -154,8 +155,14 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 	// We'll need information from the parent header (such as the seed)
 	parentBlockHeader := GetParentBlockHeader(chain, block)
 
+	// Create the signature which will be used as part of the secret lottery and to authorise the block
+	if err := c.AuthoriseBlock(parentBlockHeader, currentBlockHeader); err != nil {
+		log.Debug("GOV: An error occurred whilst creating the signature to authorise the block")
+		return nil, err
+	}
+
 	// First check to see if the node is part of the current coterie / block-creator set
-	inCommittee, err := c.selectedForCurrentCommittee(parentBlockHeader, signer)
+	inCommittee, err := c.HasBeenSelectedToCommittee(signer, &currentBlockHeader.ExtendedHeader.Signature)
 	if err != nil {
 		return nil, err
 	} else if ! inCommittee {
@@ -193,13 +200,8 @@ func (c *Coterie) APIs(chain consensus.ChainReader) []rpc.API {
 //TODO figure out if this needs to be changed once the hash for the committee is known
 // mine is the actual proof-of-work miner that searches for a nonce starting from
 // seed that results in correct final block difficulty.
-func (c *Coterie) seal(block *types.Block) (*types.Block, error) {
+func (c *Coterie) seal(block *types.Block, ) (*types.Block, error) {
 	header := block.Header()
-
-	// Add the authorisation signature to the block
-	if err := c.AuthoriseBlock(header); err != nil {
-		return nil, err
-	}
 
 	// Seal and return a block (if still needed)
 	return block.WithSeal(header), nil
@@ -224,6 +226,15 @@ func (c *Coterie) SetAuthorisedMinersWhitelist(contractBackend bind.ContractBack
 			c.minersWhitelist = whitelist
 		}
 	}
+
+	if c.consensusParameters == nil {
+		if parameters, err := NewConsensusParameters(contractBackend); err != nil {
+			return err
+		} else {
+			c.consensusParameters = parameters
+		}
+	}
+
 	return nil
 }
 

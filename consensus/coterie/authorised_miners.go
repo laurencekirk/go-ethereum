@@ -18,7 +18,7 @@ var (
 		Pending: false,
 	}
 	// The address that the whitelist smart contract is deployed to in the genesis block
-	contractAddress = common.HexToAddress("0x0000000000000000000000000000000000000042")
+	whitelistContractAddress = common.HexToAddress("0x0000000000000000000000000000000000000042")
 )
 
 type AuthorisedMinersWhitelist struct {
@@ -26,7 +26,7 @@ type AuthorisedMinersWhitelist struct {
 }
 
 func NewAuthorisedMinersWhitelist(contractBackend bind.ContractBackend) (*AuthorisedMinersWhitelist, error) {
-	whitelist, err := contract.NewAuthorisedMinersWhitelist(contractAddress, contractBackend)
+	whitelist, err := contract.NewAuthorisedMinersWhitelist(whitelistContractAddress, contractBackend)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +54,18 @@ func (self *AuthorisedMinersWhitelist) IsMinerInWhitelist(minerAddress common.Ad
 		return false, err
 	} else {
 		return auth, nil
+	}
+}
+
+func (self *AuthorisedMinersWhitelist) GetWhitelistSize() (uint, error) {
+	if self.whitelistContractInstance == nil {
+		return 0, errorMissingWhitelistContract
+	}
+
+	if size, err := self.whitelistContractInstance.Size(&callOpts); err != nil {
+		return 0, err
+	} else {
+		return uint(size), nil
 	}
 }
 
