@@ -20,15 +20,13 @@ var (
 )
 
 func (c *Coterie) AuthoriseBlock(parentHeader *types.Header, header *types.Header) (error) {
-	log.Debug("GOV: the header", "header", header)
-
 	//c.lock.RLock()
 	c.lock.Lock()
 	signer, signFn := c.signer, c.signFn
 	//c.lock.RUnlock()
 	c.lock.Unlock()
 
-	hashToBeSigned := retrieveHashToBeSigned(parentHeader, header, BlockProducer)
+	hashToBeSigned := RetrieveHashToBeSigned(parentHeader, header, BlockProducer)
 	if hashToBeSigned == nil || len(hashToBeSigned) == 0 {
 		return ErrMissingHash
 	}
@@ -49,8 +47,6 @@ func (c *Coterie) AuthoriseBlock(parentHeader *types.Header, header *types.Heade
 	if err != nil {
 		return err
 	}
-
-	log.Debug("GOV: the signature", "signature", sig)
 
 	header.SetExtendedHeader(sig)
 	return nil
@@ -94,7 +90,7 @@ func readPasswordFromFile(filePath string) (string, error) {
  * We require a 32 bit length string for the ECDSA signing function - this function assembles the known parts of a block, for a given 'task',
  * that will be used to create the fixed length string / hash.
  */
-func retrieveHashToBeSigned(parentHeader *types.Header, header *types.Header, task ConsensusTask) []byte {
+func RetrieveHashToBeSigned(parentHeader *types.Header, header *types.Header, task ConsensusTask) []byte {
 	switch task {
 		case BlockProducer:
 			seed := parentHeader.ExtendedHeader.Seed

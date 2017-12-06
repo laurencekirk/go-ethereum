@@ -13,28 +13,25 @@ import (
 // Verify that the Block must have originated from the holder of the expected private key.
 // Given the public key that is paired with the expected, unknown, private key check that Block must have been signed by
 // the expected private key.
-func VerifyBlockAuthenticity(authorisedMinersWhitelist *AuthorisedMinersWhitelist, header *types.Header) (bool, error) {
+func (c *Coterie) VerifyBlockAuthenticity(parentsHeader *types.Header, header *types.Header) (bool, error) {
 	log.Debug("Verifying the authenticity of the block's header: ", "header", header.String())
 
-	blockAuthor, err := RetrieveBlockAuthor(header)
+	blockAuthor, err := RetrieveBlockAuthor(parentsHeader, header)
 	if err != nil {
 		return false, err
 	}
 
-	// Retrieve the address from the public key and check to see if this is in the whitelist
-	return authorisedMinersWhitelist.IsMinerInWhitelist(blockAuthor)
+	log.Debug("Retrieved the block signer, checking that they were selected based on the signature", "signer", blockAuthor, "signature", header.ExtendedHeader.Signature)
+
+	return c.HasBeenSelectedToCommittee(blockAuthor, &header.ExtendedHeader.Signature)
 }
 
-func retrievePlaintext(header *types.Header) []byte {
-	return header.ParentHash[:]
-}
-
-func RetrieveBlockAuthor(header *types.Header) (common.Address, error) {
+func RetrieveBlockAuthor(parentsHeader *types.Header, header *types.Header) (common.Address, error) {
 	if headerErr := validateHeader(header); headerErr != nil {
 		return common.Address{}, headerErr
 	}
 
-	plaintext := retrievePlaintext(header)
+	plaintext := RetrieveHashToBeSigned(parentsHeader, header, BlockProducer)
 	if plaintext == nil || len(plaintext) == 0 {
 		return common.Address{}, errors.New("Unable to verify a block with a missing parent hash.")
 	}

@@ -56,8 +56,15 @@ func New(deferTo consensus.Engine, dirLocFn DirectoryLocatorFn) *Coterie {
 // Author retrieves the Ethereum address of the account that minted the given
 // block, which may be different from the header's coinbase if a consensus
 // engine is based on signatures.
+// @Deprecated: there isn't enough information in the header alone to determine the author in this consensus mechanism -
+// use the function `AuthorisedBy` that uses chainReader and is consistent with the other consensus mechanism functions.
 func (c *Coterie) Author(header *types.Header) (common.Address, error) {
-	return RetrieveBlockAuthor(header)
+	return header.Coinbase, nil
+}
+
+func (c *Coterie) AuthorisedBy(chain consensus.ChainReader, header *types.Header) (common.Address, error) {
+	parentHeader := GetParentBlockHeader(chain, header)
+	return RetrieveBlockAuthor(parentHeader, header)
 }
 
 // VerifyHeader checks whether a header conforms to the consensus rules of a
@@ -153,7 +160,7 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 	c.lock.Unlock()
 
 	// We'll need information from the parent header (such as the seed)
-	parentBlockHeader := GetParentBlockHeader(chain, block)
+	parentBlockHeader := GetParentBlockHeader(chain, currentBlockHeader)
 
 	// Create the signature which will be used as part of the secret lottery and to authorise the block
 	if err := c.AuthoriseBlock(parentBlockHeader, currentBlockHeader); err != nil {
@@ -183,10 +190,9 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 	return c.secondLayerConsensusEngine.Seal(chain, blockWithSeed, stop)
 }
 
-func GetParentBlockHeader(chain consensus.ChainReader, block *types.Block) (*types.Header) {
-	childHeader := block.Header()
-	childBlockNumber := childHeader.Number.Uint64();
-	return chain.GetHeader(childHeader.ParentHash, childBlockNumber-1)
+func GetParentBlockHeader(chain consensus.ChainReader, currentBlockHeader *types.Header) (*types.Header) {
+	childBlockNumber := currentBlockHeader.Number.Uint64();
+	return chain.GetHeader(currentBlockHeader.ParentHash, childBlockNumber-1)
 }
 
 // APIs returns the RPC APIs this consensus engine provides.
