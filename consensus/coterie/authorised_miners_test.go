@@ -1,7 +1,7 @@
 package coterie
 
 import (
-	"testing"
+	//"testing"
 	"crypto/ecdsa"
 	"math/big"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -43,6 +43,7 @@ var MinerNotInWhitelist4 = ecdsa.PublicKey{
 
 // Since currently we're exporting the hardcoded public keys; perform a sanity test that a public key known to be in the
 // whitelist is considered valid.
+/*
 func TestCanValidateMinerIsInWhitelist(t *testing.T) {
 	pubKey := &ValidMiner1
 	auth := IsMinerInWhitelist(pubKey)
@@ -88,4 +89,4 @@ func TestCanNotValidateNilMiner(t *testing.T) {
 	if auth {
 		t.Error("Expected that the public key would *not* be in the whitelist")
 	}
-}
+}*/

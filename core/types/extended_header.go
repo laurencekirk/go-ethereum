@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -39,9 +40,29 @@ func (b *Block) ExtendedHeader() *ExtendedHeader            { return b.header.Ex
 // SetExtendedHeader converts a byte slice to a ExtendedHeade.
 // It panics if b is not of suitable size.
 func (h *Header) SetExtendedHeader(sig []byte) {
-	if len(sig) != signatureLength {
-		panic(fmt.Sprintf("The signature to be used in the Extended Header is not the correct size: expected %d; got %d", signatureLength, len(sig)))
+	if h.ExtendedHeader != nil {
+		h.ExtendedHeader.Signature.SetBytes(sig)
+	}
+}
+
+func HexToSignature(s string) Signature {
+	return BytesToSignature(common.FromHex(s))
+}
+
+func BytesToSignature(b []byte) Signature {
+	var s Signature
+	s.SetBytes(b)
+	return s
+}
+
+func (sig *Signature) SetBytes(b []byte) {
+	if len(b) != signatureLength {
+		panic(fmt.Sprintf("The signature to be used in the Extended Header is not the correct size: expected %d; got %d", signatureLength, len(b)))
 	}
 
-	copy(h.ExtendedHeader.Signature[:], sig[:])
+	copy(sig[:], b[:])
+}
+
+func (sig *Signature) String() string {
+	return common.ToHex(sig[:])
 }
