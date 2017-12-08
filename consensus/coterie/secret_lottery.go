@@ -74,16 +74,18 @@ func calculateWinningThreshold(contractParameters *ConsensusParameters, whitelis
 		return float64(-1), err
 	}
 
-	log.Info("GOV: the target committee is", "number", targetCommitteeSize)
+	log.Debug("GOV: the target committee is", "number", targetCommitteeSize)
 
 	whitelistSize, err := whitelist.GetWhitelistSize()
 	if err != nil {
 		return float64(-1), err
 	}
 
-	log.Info("GOV: the number of nodes in the lottery is", "number", whitelistSize)
+	log.Debug("GOV: the number of nodes in the lottery is", "number", whitelistSize)
+	targetCommitteeSizeAsFloat := float64(targetCommitteeSize)
+	whitelistSizeAsFloat := float64(whitelistSize)
 
-	return float64(targetCommitteeSize / whitelistSize), nil
+	return targetCommitteeSizeAsFloat / whitelistSizeAsFloat, nil
 }
 
 func removeLeadingZeroDigits(hexString string) (string, error) {
