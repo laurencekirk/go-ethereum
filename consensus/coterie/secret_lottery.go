@@ -46,6 +46,8 @@ func (c *Coterie) hasWonSecretLottery(authorisation *types.Signature) (bool, err
 	if sigValue, err := calculateSignaturesRealValue(authorisation); err != nil {
 		return false, err
 	} else {
+		log.Debug("GOV: The real value based on the signature is ", "value", sigValue)
+		log.Debug("GOV: The threshold to be below is ", "threshold", threshold)
 		return sigValue < threshold, nil
 	}
 }
