@@ -45,14 +45,14 @@ func (h *Header) SetExtendedHeader(sig []byte) {
 	}
 }
 
-func HexToSignature(s string) Signature {
+func HexToSignature(s string) *Signature {
 	return BytesToSignature(common.FromHex(s))
 }
 
-func BytesToSignature(b []byte) Signature {
+func BytesToSignature(b []byte) *Signature {
 	var s Signature
 	s.SetBytes(b)
-	return s
+	return &s
 }
 
 func (sig *Signature) SetBytes(b []byte) {

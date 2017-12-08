@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math"
+	"strings"
 )
 
 type ConsensusTask int
@@ -38,24 +39,31 @@ func (c *Coterie) HasBeenSelectedToCommittee(signer common.Address, authorisatio
 
 func (c *Coterie) hasWonSecretLottery(authorisation *types.Signature) (bool, error) {
 
-	if threshold, err := calculateWinningThreshold(c.consensusParameters, c.minersWhitelist); err != nil {
+	threshold, err := calculateWinningThreshold(c.consensusParameters, c.minersWhitelist)
+	if err != nil {
+		return false, err
+	}
+	if sigValue, err := calculateSignaturesRealValue(authorisation); err != nil {
 		return false, err
 	} else {
-		return calculateSignaturesRealValue(authorisation) < threshold, nil
+		return sigValue < threshold, nil
 	}
 }
 
-func calculateSignaturesRealValue(authorisation *types.Signature) float64 {
+func calculateSignaturesRealValue(authorisation *types.Signature) (float64, error) {
 	uint64SizedSlice := authorisation[: maxNumBytes]
 	sigString := common.ToHex(uint64SizedSlice)
+	sigString, err := removeLeadingZeroDigits(sigString)
+	if err != nil {
+		return -1, err
+	}
 	value, err := hexutil.DecodeUint64(sigString)
 	if err != nil {
-		log.Error("The error", "err", err)
+		return -1, err
 	}
-	log.Debug("The value", "value", value)
 	asFloat := float64(value)
-	devisor := math.Pow(2, exponent)
-	return asFloat / devisor
+	divisor := math.Pow(2, exponent)
+	return asFloat / divisor, nil
 }
 
 func calculateWinningThreshold(contractParameters *ConsensusParameters, whitelist *AuthorisedMinersWhitelist) (float64, error) {
@@ -74,4 +82,27 @@ func calculateWinningThreshold(contractParameters *ConsensusParameters, whitelis
 	log.Info("GOV: the number of nodes in the lottery is", "number", whitelistSize)
 
 	return float64(targetCommitteeSize / whitelistSize), nil
+}
+
+func removeLeadingZeroDigits(hexString string) (string, error) {
+	if _, err := hexutil.DecodeUint64(hexString); err != nil {
+		if err == hexutil.ErrLeadingZero {
+			without0xPrefix := hexString[2:]
+			numLeaderZeros := 0
+			for _, char := range without0xPrefix {
+				if char == '0' {
+					numLeaderZeros++
+				} else {
+					break
+				}
+			}
+
+			return strings.Join([]string{"0x", without0xPrefix[numLeaderZeros:]}, ""), nil
+		} else {
+			return hexString, err
+		}
+	} else {
+		return hexString, nil
+	}
+
 }
