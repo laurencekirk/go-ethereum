@@ -5,8 +5,14 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/common"
 	"math/big"
+	"io/ioutil"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"os"
 )
 
+const (
+	account1Pwd = "qwerty"
+)
 
 /*
  * RetrieveHashToBeSigned Tests Start
@@ -50,7 +56,6 @@ func TestProduceBlockTaskHashIsSameForSameInput(t *testing.T) {
 		}
 	}
 }
-
 /*
  * RetrieveHashToBeSigned Tests End
  */
@@ -59,6 +64,61 @@ func TestProduceBlockTaskHashIsSameForSameInput(t *testing.T) {
 /*
  * GenerateNextSeed Tests Start
  */
+func TestNextGeneratedSeedIsCorrect(t *testing.T) {
+	// Set up
+	dir, ks := CreateTempKeystore(t)
+	defer os.RemoveAll(dir)
+
+	account, err := ks.NewAccount(account1Pwd)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	signer := account.Address
+	signerFn := ks.SignHash
+	consensus := GetMockCoterieForAuthorising(signer, signerFn, ks)
+
+	parentHeader := getMockedParentHeader()
+	currentBlockHeader := getMockedBlockHeader()
+
+	// Unlock the account in order to perform the necessary signing
+	ks.Unlock(account, account1Pwd)
+	defer ks.Lock(signer)
+
+	// Add a valid signature to the block for use in the validation stage
+	if err := consensus.AuthoriseBlock(parentHeader, currentBlockHeader); err != nil {
+		t.Fatal(err)
+	}
+
+	// Test
+	sig, err := consensus.GenerateNextSeed(parentHeader)
+
+	// Verify
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if sig == nil {
+		t.Error("Expected that the seed would not be null")
+	}
+
+	if len(sig) != 65 {
+		t.Error("Expected the seed would be an appropriately sized signature")
+	}
+
+	output := sig.String()
+	if len(output) == 0 {
+
+	}
+
+	currentBlockHeader.ExtendedHeader.Seed = *sig
+
+	if valid, err := isSeedValid(parentHeader, currentBlockHeader); !valid {
+		t.Error("Expected that the seed generated would be considered valid by the consensus rules")
+	} else if err != nil {
+		t.Fatal(err)
+	}
+}
 
 /*
  * GenerateNextSeed Tests End
@@ -95,4 +155,24 @@ func getMockedBlockHeader() *types.Header {
 		Nonce:			types.EncodeNonce(42),
 		ExtendedHeader:	&extendedHeader,
 	}
+}
+
+func GetMockCoterieForAuthorising(signer common.Address, signerFn SignerFn, ks *keystore.KeyStore) *Coterie {
+	return &Coterie{
+		signer:		signer,
+		signFn:		signerFn,
+		ks:			ks,
+	}
+}
+
+
+func CreateTempKeystore(t *testing.T) (dir string, ks *keystore.KeyStore) {
+	d, err := ioutil.TempDir("", "geth-keystore-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ks = keystore.NewKeyStore(d, keystore.LightScryptN, keystore.LightScryptP)
+
+	return d, ks
 }

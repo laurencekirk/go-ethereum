@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/crypto"
 	"math/big"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 const PASSWORD_FILE_NAME string = "coinbasepwd"
@@ -100,6 +101,8 @@ func RetrieveHashToBeSigned(parentHeader *types.Header, header *types.Header, ta
 			roundBytes := round.Bytes()
 			roundBytesLen := len(roundBytes)
 			totalDataLength := roundBytesLen + taskBytesLength + len(seed)
+
+			// Create a byte array based off of the necessary data
 			data := make([]byte, totalDataLength)
 			copy(data[0:roundBytesLen], roundBytes)
 			copy(data[roundBytesLen: roundBytesLen + taskBytesLength], taskBytes)
@@ -114,11 +117,8 @@ func RetrieveHashToBeSigned(parentHeader *types.Header, header *types.Header, ta
 }
 
 func (c *Coterie) GenerateNextSeed(parentHeader *types.Header) (*types.Signature, error) {
-	// The new seed Q r is computed as the signature of the previous seed Q r−1
-	previousSeed := parentHeader.ExtendedHeader.Seed
-
 	// The signing function requires a 32 byte 'hash' to be signed and the signature is 65 bytes, so take a Keccak256Hash of it
-	hashToBeSigned := crypto.Keccak256Hash(previousSeed[:])
+	hashToBeSigned := retrieveSeedsHashToBeSigned(parentHeader)
 
 	c.lock.Lock()
 	signer, signFn := c.signer, c.signFn
@@ -132,6 +132,13 @@ func (c *Coterie) GenerateNextSeed(parentHeader *types.Header) (*types.Signature
 	}
 
 	return types.BytesToSignature(sig), nil
+}
+
+func retrieveSeedsHashToBeSigned(parentHeader *types.Header) common.Hash {
+	// The new seed Q r is computed as the signature of the previous seed Q r−1
+	previousSeed := parentHeader.ExtendedHeader.Seed
+
+	return crypto.Keccak256Hash(previousSeed[:])
 }
 
 func zeroPassword(p *string) {
