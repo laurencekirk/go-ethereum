@@ -8,10 +8,12 @@ import (
 	"io/ioutil"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"os"
+	"bytes"
 )
 
 const (
 	account1Pwd = "qwerty"
+	account2Pwd = "ytrewwq"
 )
 
 /*
@@ -99,16 +101,11 @@ func TestNextGeneratedSeedIsCorrect(t *testing.T) {
 	}
 
 	if sig == nil {
-		t.Error("Expected that the seed would not be null")
+		t.Error("Expected that the seed would not be nil")
 	}
 
 	if len(sig) != 65 {
 		t.Error("Expected the seed would be an appropriately sized signature")
-	}
-
-	output := sig.String()
-	if len(output) == 0 {
-
 	}
 
 	currentBlockHeader.ExtendedHeader.Seed = *sig
@@ -117,6 +114,58 @@ func TestNextGeneratedSeedIsCorrect(t *testing.T) {
 		t.Error("Expected that the seed generated would be considered valid by the consensus rules")
 	} else if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestNextGeneratedSeedIsTheSameGivenSameInput(t *testing.T) {
+	// Set up
+	dir, ks := CreateTempKeystore(t)
+	defer os.RemoveAll(dir)
+
+	account, err := ks.NewAccount(account2Pwd)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	signer := account.Address
+	signerFn := ks.SignHash
+	consensus := GetMockCoterieForAuthorising(signer, signerFn, ks)
+
+	parentHeader := getMockedParentHeader()
+	currentBlockHeader := getMockedBlockHeader()
+
+	// Unlock the account in order to perform the necessary signing
+	ks.Unlock(account, account2Pwd)
+	defer ks.Lock(signer)
+
+	// Add a valid signature to the block for use in the validation stage
+	if err := consensus.AuthoriseBlock(parentHeader, currentBlockHeader); err != nil {
+		t.Fatal(err)
+	}
+
+	// Test
+	sig1, err1 := consensus.GenerateNextSeed(parentHeader)
+	sig2, err2 := consensus.GenerateNextSeed(parentHeader)
+	sig3, err3 := consensus.GenerateNextSeed(parentHeader)
+
+	if err1 != nil || err2 != nil || err3 != nil {
+		t.Fatal(err1, err2, err3)
+	}
+
+	if sig1 == nil {
+		t.Error("Expected that the seed would not be nil")
+	}
+
+	if len(sig1) != 65 {
+		t.Error("Expected the seed would be an appropriately sized signature")
+	}
+
+	if bytes.Compare(sig1[:], sig2[:]) != 0 {
+		t.Error("Expected that the second seed generated would be the same as the first")
+	}
+
+	if bytes.Compare(sig1[:], sig3[:]) != 0 {
+		t.Error("Expected that the third seed generated would be the same as the first")
 	}
 }
 
