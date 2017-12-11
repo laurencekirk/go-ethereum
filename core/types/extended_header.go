@@ -2,8 +2,6 @@ package types
 
 import (
 	"fmt"
-	"math/big"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -17,13 +15,12 @@ type Signature [signatureLength]byte
 
 // Extended Header is a simple data container for storing extra data - that makes up part of the extended protocol
 type ExtendedHeader struct {
-	Seed  			*big.Int		`json:"seed"       gencodec:"required"`
+	Seed  			Signature		`json:"seed"       gencodec:"required"`
 	Signature 		Signature		`json:"signature"   gencodec:"required"`
 }
 
 // field type overrides for gencodec
 type extendedHeaderMarshaling struct {
-	Seed *hexutil.Big
 }
 
 func (eh ExtendedHeader) String() string {
@@ -32,12 +29,12 @@ func (eh ExtendedHeader) String() string {
 	Seed:			%v
 	Signature:		%v
 ]
-`, eh.Seed, string(eh.Signature[:]))
+`, string(eh.Seed[:]), string(eh.Signature[:]))
 }
 
 func (b *Block) ExtendedHeader() *ExtendedHeader            { return b.header.ExtendedHeader }
 
-// SetExtendedHeader converts a byte slice to a ExtendedHeade.
+// SetExtendedHeader converts a byte slice to an ExtendedHeader.
 // It panics if b is not of suitable size.
 func (h *Header) SetExtendedHeader(sig []byte) {
 	if h.ExtendedHeader != nil {

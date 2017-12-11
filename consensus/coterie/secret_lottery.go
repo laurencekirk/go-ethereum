@@ -12,9 +12,9 @@ import (
 type ConsensusTask int
 
 const (
-	BlockProducer ConsensusTask	= iota + 1
-	AnomalyDetection
-	ParameterChanges
+	ProduceBlock     ConsensusTask = iota + 1
+	DetectAnomalies
+	ChangeParameters
 )
 
 const (

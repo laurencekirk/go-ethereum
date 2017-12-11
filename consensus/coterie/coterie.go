@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/log"
-	"math/big"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"sync"
 )
@@ -182,7 +181,7 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 		return nil, err
 	}
 
-	blockWithSeed, err := addNextSeed(parentBlockHeader.ExtendedHeader, sealedBlock)
+	blockWithSeed, err := c.addNextSeed(parentBlockHeader, sealedBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -213,12 +212,15 @@ func (c *Coterie) seal(block *types.Block, ) (*types.Block, error) {
 	return block.WithSeal(header), nil
 }
 
-func addNextSeed(parentBlockHeader *types.ExtendedHeader, block *types.Block) (*types.Block, error) {
+func (c *Coterie) addNextSeed(parentBlockHeader *types.Header, block *types.Block) (*types.Block, error) {
 	header := block.Header()
-	parentSeed := parentBlockHeader.Seed
 
-	// TODO implement the correct logic here
-	header.ExtendedHeader.Seed = new(big.Int).Add(parentSeed, big.NewInt(1))
+	nextSeed, err := c.GenerateNextSeed(parentBlockHeader)
+	if err != nil {
+		return block, err
+	}
+
+	copy(header.ExtendedHeader.Seed[:], nextSeed[:])
 
 	return block.WithSeal(header), nil
 }

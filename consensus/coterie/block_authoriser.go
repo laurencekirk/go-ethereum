@@ -26,7 +26,7 @@ func (c *Coterie) AuthoriseBlock(parentHeader *types.Header, header *types.Heade
 	//c.lock.RUnlock()
 	c.lock.Unlock()
 
-	hashToBeSigned := RetrieveHashToBeSigned(parentHeader, header, BlockProducer)
+	hashToBeSigned := RetrieveHashToBeSigned(parentHeader, header, ProduceBlock)
 	if hashToBeSigned == nil || len(hashToBeSigned) == 0 {
 		return ErrMissingHash
 	}
@@ -92,18 +92,46 @@ func readPasswordFromFile(filePath string) (string, error) {
  */
 func RetrieveHashToBeSigned(parentHeader *types.Header, header *types.Header, task ConsensusTask) []byte {
 	switch task {
-		case BlockProducer:
+		case ProduceBlock:
 			seed := parentHeader.ExtendedHeader.Seed
 			round := header.Number
 			taskBytes := big.NewInt(int64(task)).Bytes()
-			data := append(round.Bytes()[:], taskBytes[:]...)
-			data = append(data[:], seed.Bytes()[:]...)
+			taskBytesLength := len(taskBytes)
+			roundBytes := round.Bytes()
+			roundBytesLen := len(roundBytes)
+			totalDataLength := roundBytesLen + taskBytesLength + len(seed)
+			data := make([]byte, totalDataLength)
+			copy(data[0:roundBytesLen], roundBytes)
+			copy(data[roundBytesLen: roundBytesLen + taskBytesLength], taskBytes)
+			copy(data[roundBytesLen + taskBytesLength:], seed[:])
+
 			hash := crypto.Keccak256Hash(data)
 			return hash[:]
 		default:
 			log.Warn("GOV: retrieving of the hash for the task has not been implemented yet", "task", task)
 			return nil
 	}
+}
+
+func (c *Coterie) GenerateNextSeed(parentHeader *types.Header) (*types.Signature, error) {
+	// The new seed Q r is computed as the signature of the previous seed Q r−1
+	previousSeed := parentHeader.ExtendedHeader.Seed
+
+	// The signing function requires a 32 byte 'hash' to be signed and the signature is 65 bytes, so take a Keccak256Hash of it
+	hashToBeSigned := crypto.Keccak256Hash(previousSeed[:])
+
+	c.lock.Lock()
+	signer, signFn := c.signer, c.signFn
+	c.lock.Unlock()
+
+	signingAccount := accounts.Account{Address: signer}
+
+	sig, err := signFn(signingAccount, hashToBeSigned[:])
+	if err != nil {
+		return nil, err
+	}
+
+	return types.BytesToSignature(sig), nil
 }
 
 func zeroPassword(p *string) {

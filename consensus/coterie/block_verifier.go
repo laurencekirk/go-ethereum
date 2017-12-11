@@ -31,7 +31,7 @@ func RetrieveBlockAuthor(parentsHeader *types.Header, header *types.Header) (com
 		return common.Address{}, headerErr
 	}
 
-	plaintext := RetrieveHashToBeSigned(parentsHeader, header, BlockProducer)
+	plaintext := RetrieveHashToBeSigned(parentsHeader, header, ProduceBlock)
 	if plaintext == nil || len(plaintext) == 0 {
 		return common.Address{}, errors.New("Unable to verify a block with a missing parent hash.")
 	}
@@ -42,6 +42,10 @@ func RetrieveBlockAuthor(parentsHeader *types.Header, header *types.Header) (com
 	}
 
 	return crypto.PubkeyToAddress(*publicKey), nil
+}
+
+func isSeedValid(parentsHeader *types.Header, header *types.Header) (bool, error) {
+	return true, nil
 }
 
 func validateHeader(header *types.Header) error {

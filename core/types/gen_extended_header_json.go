@@ -5,28 +5,25 @@ package types
 import (
 	"encoding/json"
 	"errors"
-	"math/big"
-
-	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 var _ = (*extendedHeaderMarshaling)(nil)
 
 func (e ExtendedHeader) MarshalJSON() ([]byte, error) {
 	type ExtendedHeader struct {
-		Seed      *hexutil.Big `json:"seed"       gencodec:"required"`
-		Signature Signature    `json:"signature"   gencodec:"required"`
+		Seed      Signature `json:"seed"       gencodec:"required"`
+		Signature Signature `json:"signature"   gencodec:"required"`
 	}
 	var enc ExtendedHeader
-	enc.Seed = (*hexutil.Big)(e.Seed)
+	enc.Seed = e.Seed
 	enc.Signature = e.Signature
 	return json.Marshal(&enc)
 }
 
 func (e *ExtendedHeader) UnmarshalJSON(input []byte) error {
 	type ExtendedHeader struct {
-		Seed      *hexutil.Big `json:"seed"       gencodec:"required"`
-		Signature *Signature   `json:"signature"   gencodec:"required"`
+		Seed      *Signature `json:"seed"       gencodec:"required"`
+		Signature *Signature `json:"signature"   gencodec:"required"`
 	}
 	var dec ExtendedHeader
 	if err := json.Unmarshal(input, &dec); err != nil {
@@ -35,7 +32,7 @@ func (e *ExtendedHeader) UnmarshalJSON(input []byte) error {
 	if dec.Seed == nil {
 		return errors.New("missing required field 'seed' for ExtendedHeader")
 	}
-	e.Seed = (*big.Int)(dec.Seed)
+	e.Seed = *dec.Seed
 	if dec.Signature == nil {
 		return errors.New("missing required field 'signature' for ExtendedHeader")
 	}

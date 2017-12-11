@@ -258,7 +258,7 @@ func (g *Genesis) ToBlock() (*types.Block, *state.StateDB) {
 		// Retrieve the seed from the genesis configuration
 		genesisSeed := g.Config.Coterie.Seed
 		head.ExtendedHeader = &types.ExtendedHeader{
-			Seed: new(big.Int).SetUint64(genesisSeed),
+			Seed: *types.HexToSignature(genesisSeed),
 			Signature: types.Signature{},
 		}
 	}
