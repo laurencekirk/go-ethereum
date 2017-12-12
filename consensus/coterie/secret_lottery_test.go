@@ -8,7 +8,7 @@ import (
 
 const TOLERANCE = 0.000000000000001
 
-func Test(t *testing.T) {
+func TestConversionToRealValueOutput(t *testing.T) {
 	cases := []struct {
 		in string
 		want float64
