@@ -54,6 +54,8 @@ type Genesis struct {
 	Coinbase   common.Address      `json:"coinbase"`
 	Alloc      GenesisAlloc        `json:"alloc"      gencodec:"required"`
 
+	ExtendedHeader *types.ExtendedHeader `json:"extendedHeader"   gencodec:"required"`
+
 	// These fields are used for consensus tests. Please don't use them
 	// in actual genesis blocks.
 	Number     uint64      `json:"number"`
@@ -261,6 +263,10 @@ func (g *Genesis) ToBlock() (*types.Block, *state.StateDB) {
 			Seed: *types.HexToSignature(genesisSeed),
 			Signature: types.Signature{},
 		}
+	} else if g.ExtendedHeader != nil {
+		head.ExtendedHeader = &types.ExtendedHeader{}
+		copy(head.ExtendedHeader.Seed[:], g.ExtendedHeader.Seed[:])
+		copy(head.ExtendedHeader.Signature[:], g.ExtendedHeader.Signature[:])
 	}
 
 	return types.NewBlock(head, nil, nil, nil), statedb
