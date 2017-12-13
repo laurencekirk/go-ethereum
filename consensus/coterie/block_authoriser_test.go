@@ -9,12 +9,154 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"os"
 	"bytes"
+	"github.com/ethereum/go-ethereum/accounts"
 )
 
 const (
 	account1Pwd = "qwerty"
 	account2Pwd = "ytrewwq"
 )
+
+/*
+ * RetrieveHashToBeSigned Tests Start
+ */
+func TestCanAuthenticateBlock(t *testing.T) {
+	// Set up
+	dir, ks := CreateTempKeystore(t)
+	defer os.RemoveAll(dir)
+
+	account1 := createNewAccount(t, ks, account1Pwd)
+
+	signer := account1.Address
+	signerFn := ks.SignHash
+	consensus := GetMockCoterieForAuthorising(signer, signerFn, ks)
+
+	parentHeader := getMockedParentHeader()
+	currentBlockHeader := getMockBlockHeaderForAuthenticating(parentHeader, 1)
+
+	// Unlock the account in order to perform the necessary signing
+	ks.Unlock(*account1, account1Pwd)
+	defer ks.Lock(signer)
+
+	// Test
+	err := consensus.AuthoriseBlock(parentHeader, currentBlockHeader)
+
+	// Verify
+	if err != nil {
+		t.Errorf("Unable to add the authentication to the block: %v", err)
+	}
+}
+
+func TestSignaturesOnSameBlocksAreTheSame(t *testing.T) {
+	// Set up
+	dir, ks := CreateTempKeystore(t)
+	defer os.RemoveAll(dir)
+
+	account1 := createNewAccount(t, ks, account1Pwd)
+
+	signer := account1.Address
+	signerFn := ks.SignHash
+	consensus := GetMockCoterieForAuthorising(signer, signerFn, ks)
+
+	// Unlock the account in order to perform the necessary signing
+	ks.Unlock(*account1, account1Pwd)
+	defer ks.Lock(signer)
+
+	parentHeader := getMockedParentHeader()
+
+	block1Header := getMockBlockHeaderForAuthenticating(parentHeader, 1)
+	block2Header := getMockBlockHeaderForAuthenticating(parentHeader, 1)
+	block3Header := getMockBlockHeaderForAuthenticating(parentHeader, 1)
+
+	// Test
+	err1 := consensus.AuthoriseBlock(parentHeader, block1Header)
+	err2 := consensus.AuthoriseBlock(parentHeader, block2Header)
+	err3 := consensus.AuthoriseBlock(parentHeader, block3Header)
+
+	// Verify
+	if err1 != nil || err2 != nil || err3 != nil {
+		t.Fatal(err1, err2, err3)
+	}
+
+	// Block sanity tests
+	// The block numbers must be sequential
+	if block1Header.Number.Cmp(block2Header.Number) != 0 || block1Header.Number.Cmp(block3Header.Number) != 0 {
+		t.Error("Expected that the blocks would have the same block number")
+	}
+
+	if bytes.Compare(block1Header.ExtendedHeader.Signature[:], block2Header.ExtendedHeader.Signature[:]) != 0 ||
+		bytes.Compare(block1Header.ExtendedHeader.Signature[:], block3Header.ExtendedHeader.Signature[:]) != 0 {
+		t.Error("Expected that the blocks' signatures would be the same")
+	}
+}
+
+func TestSignaturesOnSubsequentBlocksAreNotTheSame(t *testing.T) {
+	// Set up
+	dir, ks := CreateTempKeystore(t)
+	defer os.RemoveAll(dir)
+
+	account1 := createNewAccount(t, ks, account1Pwd)
+
+	signer := account1.Address
+	signerFn := ks.SignHash
+	consensus := GetMockCoterieForAuthorising(signer, signerFn, ks)
+
+	// Unlock the account in order to perform the necessary signing
+	ks.Unlock(*account1, account1Pwd)
+	defer ks.Lock(signer)
+
+	parentHeader := getMockedParentHeader()
+
+	block1Header := getMockBlockHeaderForAuthenticating(parentHeader, 1)
+	block1Seed, err := consensus.GenerateNextSeed(parentHeader)
+	if err != nil {
+		t.Errorf("Unable to create the seed for the first block: %v", err)
+	}
+	block1Header.ExtendedHeader.Seed = *block1Seed
+
+	block2Header := getMockBlockHeaderForAuthenticating(block1Header, 2)
+	block2Seed, err := consensus.GenerateNextSeed(parentHeader)
+	if err != nil {
+		t.Errorf("Unable to create the seed for the first block: %v", err)
+	}
+	block2Header.ExtendedHeader.Seed = *block2Seed
+
+	block3Header := getMockBlockHeaderForAuthenticating(block2Header, 3)
+	block3Seed, err := consensus.GenerateNextSeed(parentHeader)
+	if err != nil {
+		t.Errorf("Unable to create the seed for the first block: %v", err)
+	}
+	block3Header.ExtendedHeader.Seed = *block3Seed
+
+	// Test
+	err1 := consensus.AuthoriseBlock(parentHeader, block1Header)
+	err2 := consensus.AuthoriseBlock(block1Header, block2Header)
+	err3 := consensus.AuthoriseBlock(block2Header, block3Header)
+
+	// Verify
+	if err1 != nil || err2 != nil || err3 != nil {
+		t.Fatal(err1, err2, err3)
+	}
+
+	// Block sanity tests
+	// The block numbers must be sequential
+	if block1Header.Number.Cmp(block2Header.Number) >= 0 || block1Header.Number.Cmp(block3Header.Number) >= 0 || block2Header.Number.Cmp(block3Header.Number) >= 0 {
+		t.Error("Expected that the blocks would have different numbers")
+	}
+
+	if bytes.Compare(block1Header.ExtendedHeader.Signature[:], block2Header.ExtendedHeader.Signature[:]) == 0 ||
+		bytes.Compare(block1Header.ExtendedHeader.Signature[:], block3Header.ExtendedHeader.Signature[:]) == 0  ||
+		bytes.Compare(block2Header.ExtendedHeader.Signature[:], block3Header.ExtendedHeader.Signature[:]) == 0  {
+		t.Error("Expected that the blocks' signatures would be different")
+	}
+}
+
+
+//TOOD check that the parent header matches expected
+
+/*
+ * RetrieveHashToBeSigned Tests End
+ */
 
 /*
  * RetrieveHashToBeSigned Tests Start
@@ -71,10 +213,7 @@ func TestNextGeneratedSeedIsCorrect(t *testing.T) {
 	dir, ks := CreateTempKeystore(t)
 	defer os.RemoveAll(dir)
 
-	account, err := ks.NewAccount(account1Pwd)
-	if err != nil {
-		t.Fatal(err)
-	}
+	account := createNewAccount(t, ks, account1Pwd)
 
 	signer := account.Address
 	signerFn := ks.SignHash
@@ -84,7 +223,7 @@ func TestNextGeneratedSeedIsCorrect(t *testing.T) {
 	currentBlockHeader := getMockedBlockHeader()
 
 	// Unlock the account in order to perform the necessary signing
-	ks.Unlock(account, account1Pwd)
+	ks.Unlock(*account, account1Pwd)
 	defer ks.Lock(signer)
 
 	// Add a valid signature to the block for use in the validation stage
@@ -122,10 +261,7 @@ func TestNextGeneratedSeedIsTheSameGivenSameInput(t *testing.T) {
 	dir, ks := CreateTempKeystore(t)
 	defer os.RemoveAll(dir)
 
-	account, err := ks.NewAccount(account2Pwd)
-	if err != nil {
-		t.Fatal(err)
-	}
+	account := createNewAccount(t, ks, account2Pwd)
 
 	signer := account.Address
 	signerFn := ks.SignHash
@@ -135,7 +271,7 @@ func TestNextGeneratedSeedIsTheSameGivenSameInput(t *testing.T) {
 	currentBlockHeader := getMockedBlockHeader()
 
 	// Unlock the account in order to perform the necessary signing
-	ks.Unlock(account, account2Pwd)
+	ks.Unlock(*account, account2Pwd)
 	defer ks.Lock(signer)
 
 	// Add a valid signature to the block for use in the validation stage
@@ -191,6 +327,19 @@ func getMockedParentHeader() *types.Header {
 	}
 }
 
+func getMockBlockHeaderForAuthenticating(parentHeader *types.Header, blockNumber int64) *types.Header {
+	extendedHeader := types.ExtendedHeader{}
+
+	return &types.Header{
+		ParentHash:		parentHeader.Hash(),
+		Number:			big.NewInt(blockNumber),
+		Difficulty: 	big.NewInt(196608),
+		GasLimit:		big.NewInt(117440512),
+		Nonce:			types.EncodeNonce(42),
+		ExtendedHeader:	&extendedHeader,
+	}
+}
+
 func getMockedBlockHeader() *types.Header {
 	extendedHeader := types.ExtendedHeader{
 		Signature:		*types.HexToSignature( "0x1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
@@ -224,4 +373,12 @@ func CreateTempKeystore(t *testing.T) (dir string, ks *keystore.KeyStore) {
 	ks = keystore.NewKeyStore(d, keystore.LightScryptN, keystore.LightScryptP)
 
 	return d, ks
+}
+
+func createNewAccount(t *testing.T, ks *keystore.KeyStore, pwd string) (*accounts.Account) {
+	acc, err := ks.NewAccount(pwd)
+	if err != nil {
+		t.Errorf("Unable to create the account: %v", err)
+	}
+	return &acc
 }
