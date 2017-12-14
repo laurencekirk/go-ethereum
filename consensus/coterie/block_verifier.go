@@ -28,13 +28,9 @@ func (c *Coterie) VerifyBlockAuthenticity(parentsHeader *types.Header, currentBl
 }
 
 func RetrieveBlockAuthor(parentsHeader *types.Header, currentBlockHeader *types.Header) (common.Address, error) {
-	if headerErr := validateHeader(currentBlockHeader); headerErr != nil {
-		return common.Address{}, headerErr
-	}
-
 	plaintext := RetrieveHashToBeSigned(parentsHeader, currentBlockHeader, ProduceBlock)
 	if plaintext == nil || len(plaintext) == 0 {
-		return common.Address{}, errors.New("Unable to verify a block with a missing parent hash.")
+		return common.Address{}, errors.New("unable to verify a block with a missing parent hash")
 	}
 	// Extract from the signature the public key that is paired with the private key; that was used to sign the block
 	publicKey, err := crypto.SigToPub(plaintext, currentBlockHeader.ExtendedHeader.Signature[:])
@@ -62,12 +58,4 @@ func isSeedValid(parentsHeader *types.Header, currentBlockHeader *types.Header) 
 	retrievedAddress := crypto.PubkeyToAddress(*publicKey)
 
 	return bytes.Compare(authoriser[:], retrievedAddress[:]) == 0, nil
-}
-
-func validateHeader(header *types.Header) error {
-	if header == nil || header.ExtendedHeader == nil || len(header.ExtendedHeader.Signature) == 0 {
-		return errors.New("The Block is not correctly formatted: The Block, it's header and the extended header should not be nil")
-	} else {
-		return nil
-	}
 }

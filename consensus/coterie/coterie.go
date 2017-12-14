@@ -18,6 +18,7 @@ import (
 var (
 	errInvalidBlock = errors.New("invalid block requested for sealing")
 	ErrInvalidAuth	= errors.New("invalid miner authentication signature in the header")
+	ErrInvalidSeed	= errors.New("invalid seed value in the header")
 )
 
 // DirectoryLocatorFn is a callback function that is used to retrieve the location of the data dir of the Ethereum node
@@ -105,16 +106,20 @@ func (c *Coterie) VerifyUncles(chain consensus.ChainReader, block *types.Block) 
 // VerifySeal checks whether the crypto seal on a header is valid according to
 // the consensus rules of the given engine.
 func (c *Coterie) VerifySeal(chain consensus.ChainReader, header *types.Header) error {
-	// TODO replace with proper validation
+	parentHeader := GetParentBlockHeader(chain, header)
 
-	// TODO confirm that this is the correct location for this logic (it is added when we create a seal, so verification here currently seems to make sense)
-	// Retrieve the public key of the miner that created the block and verify that they are eligible to create the block (that there are in the whitelist)
-	/*if valid, err := VerifyBlockAuthenticity(c.minersWhitelist, header); err != nil {
+	if valid, err := c.VerifyBlockAuthenticity(parentHeader, header); err != nil {
 		return err
-	} else if !valid {
+	} else if ! valid {
 		return ErrInvalidAuth
 	}
-*/
+
+	if valid, err := isSeedValid(parentHeader, header); err != nil {
+		return err
+	} else if ! valid {
+		return ErrInvalidSeed
+	}
+
 	return c.secondLayerConsensusEngine.VerifySeal(chain, header)
 }
 
