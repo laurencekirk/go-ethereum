@@ -33,13 +33,20 @@ func TestHeaderVerification(t *testing.T) {
 	// Create a simple chain to verify
 	var (
 		testdb, _ = ethdb.NewMemDatabase()
-		gspec     = &Genesis{Config: params.TestChainConfig}
+		gspec     = &Genesis{
+			Config: params.TestChainConfig,
+			ExtendedHeader: &types.ExtendedHeader{},
+			}
 		genesis   = gspec.MustCommit(testdb)
 		blocks, _ = GenerateChain(params.TestChainConfig, genesis, testdb, 8, nil)
 	)
 	headers := make([]*types.Header, len(blocks))
 	for i, block := range blocks {
-		headers[i] = block.Header()
+		header := block.Header()
+		header.SetExtendedHeader(types.Signature{}, types.Signature{})
+
+		headers[i] = header
+		*block = *block.WithSeal(header)
 	}
 	// Run the header checker for blocks one-by-one, checking for both valid and invalid nonces
 	chain, _ := NewBlockChain(testdb, params.TestChainConfig, ethash.NewFaker(), vm.Config{})
@@ -62,7 +69,7 @@ func TestHeaderVerification(t *testing.T) {
 				if (result == nil) != valid {
 					t.Errorf("test %d.%d: validity mismatch: have %v, want %v", i, j, result, valid)
 				}
-			case <-time.After(time.Second):
+			case <-time.After(60 * time.Second):
 				t.Fatalf("test %d.%d: verification timeout", i, j)
 			}
 			// Make sure no more data is returned

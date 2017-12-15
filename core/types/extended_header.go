@@ -36,10 +36,13 @@ func (b *Block) ExtendedHeader() *ExtendedHeader            { return b.header.Ex
 
 // SetExtendedHeader converts a byte slice to an ExtendedHeader.
 // It panics if b is not of suitable size.
-func (h *Header) SetExtendedHeader(sig []byte) {
-	if h.ExtendedHeader != nil {
-		h.ExtendedHeader.Signature.SetBytes(sig)
+func (h *Header) SetExtendedHeader(sig Signature, seed Signature) {
+	if h.ExtendedHeader == nil {
+		h.ExtendedHeader = &ExtendedHeader{}
 	}
+
+	h.ExtendedHeader.Signature = sig
+	h.ExtendedHeader.Seed = seed
 }
 
 func HexToSignature(s string) *Signature {
