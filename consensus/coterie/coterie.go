@@ -27,7 +27,7 @@ type DirectoryLocatorFn func() string
 
 // SignerFn is a signer callback function to request a hash to be signed by a
 // backing account. Copied from the clique implementation.
-// type SignerFn func(account accounts.Account, passphrase string, hash []byte) ([]byte, error)
+//type SignerFn func(account accounts.Account, passphrase string, hash []byte) ([]byte, error)
 type SignerFn func(account accounts.Account, hash []byte) ([]byte, error)
 
 
@@ -156,8 +156,6 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 		return nil, errInvalidBlock
 	}
 
-	// TODO implement proper logic
-
 	// Hold the signer fields for the entire sealing procedure
 	c.lock.Lock()
 	signer := c.signer
@@ -165,6 +163,11 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 
 	// We'll need information from the parent header (such as the seed)
 	parentBlockHeader := GetParentBlockHeader(chain, currentBlockHeader)
+
+	if err := c.UnlockAccount(signer); err != nil {
+		return nil, err
+	}
+	defer c.ks.Lock(signer)
 
 	// Create the signature which will be used as part of the secret lottery and to authorise the block
 	if err := c.AuthoriseBlock(parentBlockHeader, currentBlockHeader); err != nil {

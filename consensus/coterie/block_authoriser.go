@@ -20,11 +20,28 @@ var (
 	ErrMissingHash		= errors.New("unable to authenticate a block with a missing parent hash")
 )
 
+func (c *Coterie) UnlockAccount(signer common.Address) error {
+	password, err := c.retrieveSignerUnlockingCredentials()
+	if err != nil {
+		return err
+	}
+	defer zeroPassword(&password)
+
+	signingAccount := accounts.Account{Address: signer}
+	if err:= c.ks.Unlock(signingAccount , password); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/*
+ *
+ * Note expects the account to have been locked before this method is called e.g. using UnlockAccount - this is an optimisation for devices with smaller amounts of RAM
+ */
 func (c *Coterie) AuthoriseBlock(parentHeader *types.Header, header *types.Header) (error) {
-	//c.lock.RLock()
 	c.lock.Lock()
 	signer, signFn := c.signer, c.signFn
-	//c.lock.RUnlock()
 	c.lock.Unlock()
 
 	hashToBeSigned := RetrieveHashToBeSigned(parentHeader, header, ProduceBlock)
@@ -33,16 +50,6 @@ func (c *Coterie) AuthoriseBlock(parentHeader *types.Header, header *types.Heade
 	}
 
 	signingAccount := accounts.Account{Address: signer}
-	/*password, err := c.retrieveSignerUnlockingCredentials()
-	if err != nil {
-		return err
-	}
-	defer zeroPassword(&password)
-
-	if err:= c.ks.Unlock(signingAccount , password); err != nil {
-		return err
-	}
-	defer c.ks.Lock(signer)*/
 
 	sig, err := signFn(signingAccount, hashToBeSigned)
 	if err != nil {
@@ -116,6 +123,10 @@ func RetrieveHashToBeSigned(parentHeader *types.Header, header *types.Header, ta
 	}
 }
 
+/*
+ *
+ * Note expects the account to have been locked before this method is called e.g. using UnlockAccount - this is an optimisation for devices with smaller amounts of RAM
+ */
 func (c *Coterie) GenerateNextSeed(parentHeader *types.Header) (*types.Signature, error) {
 	// The signing function requires a 32 byte 'hash' to be signed and the signature is 65 bytes, so take a Keccak256Hash of it
 	hashToBeSigned := retrieveSeedsHashToBeSigned(parentHeader)
