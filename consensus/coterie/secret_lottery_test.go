@@ -62,6 +62,24 @@ func TestRemoveLeadingZeroDigits(t *testing.T) {
 		}
 	}
 }
+
+func TestRemoveLeadingZeroDigitsHandlesErrors(t *testing.T) {
+	cases := []struct {
+		in string
+	}{
+		{""},
+		{" 0x1"},
+		{"0"},
+		{"G"},
+		{"0xG"},
+	}
+	for _, c := range cases {
+		_, err := removeLeadingZeroDigits(c.in)
+		if err == nil {
+			t.Error("Expected that removeLeadingZeroDigits would reject the invalid string")
+		}
+	}
+}
 /**
  * removeLeadingZeroDigits tests END
  */
