@@ -105,6 +105,24 @@
 			"revisionTime": "2017-07-10T16:04:46Z"
 		},
 		{
+			"checksumSHA1": "/5JpULDw51Em+1+OJHcfDkbw/e0=",
+			"path": "github.com/golang/mock/gomock",
+			"revision": "b3e60bcdc577185fce3cf625fc96b62857ce5574",
+			"revisionTime": "2017-12-16T01:26:12Z"
+		},
+		{
+			"checksumSHA1": "YHRnzrJ86+peikvQ7S+q3H/GYeQ=",
+			"path": "github.com/golang/mock/mockgen",
+			"revision": "b3e60bcdc577185fce3cf625fc96b62857ce5574",
+			"revisionTime": "2017-12-16T01:26:12Z"
+		},
+		{
+			"checksumSHA1": "YP8qvDsT4BxOT2FHYEaRhRxlSpU=",
+			"path": "github.com/golang/mock/mockgen/model",
+			"revision": "b3e60bcdc577185fce3cf625fc96b62857ce5574",
+			"revisionTime": "2017-12-16T01:26:12Z"
+		},
+		{
 			"checksumSHA1": "yqF125xVSkmfLpIVGrLlfE05IUk=",
 			"path": "github.com/golang/protobuf/proto",
 			"revision": "748d386b5c1ea99658fd69fe9f03991ce86a90c1",
