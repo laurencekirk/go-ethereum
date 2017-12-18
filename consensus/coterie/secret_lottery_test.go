@@ -8,6 +8,9 @@ import (
 
 const TOLERANCE = 0.000000000000001
 
+/**
+ * calculateSignaturesRealValue tests START
+ */
 func TestConversionToRealValueOutput(t *testing.T) {
 	cases := []struct {
 		in string
@@ -32,10 +35,43 @@ func TestConversionToRealValueOutput(t *testing.T) {
 		assertNearEquals(c.want, got, t)
 	}
 }
+/**
+ * calculateSignaturesRealValue tests END
+ */
 
+/**
+ * removeLeadingZeroDigits tests START
+ */
+func TestRemoveLeadingZeroDigits(t *testing.T) {
+	cases := []struct {
+		in, want string
+	}{
+		{"0x49e58681b5cb5103", "0x49e58681b5cb5103"},
+		{"0x0000000000001000", "0x1000"},
+		{"0x0000000000000001", "0x1"},
+		{"0x1000000000000000", "0x1000000000000000"},
+		{"0x0000000000000000", "0x0"},
+	}
+	for _, c := range cases {
+		got, err := removeLeadingZeroDigits(c.in)
+		if err != nil {
+			t.Error(err)
+		}
+		if got != c.want {
+			t.Errorf("Expected removeLeadingZeroDigits would output the correct value: expected %v, got %v", c.want, got)
+		}
+	}
+}
+/**
+ * removeLeadingZeroDigits tests END
+ */
+
+/**
+ * Testing utility functions START
+ */
 func assertValueInCorrectRange(value float64, t *testing.T) {
 	if value <= 0 || value >= 1 {
-		t.Error("The signature's real value should be in the interval (0, 1)")
+		t.Errorf("The signature's real value should be in the interval (0, 1): got %v", value)
 	}
 }
 
@@ -45,3 +81,6 @@ func assertNearEquals(expected float64, actual float64, t *testing.T) {
 	}
 }
 
+/**
+ * Testing utility functions END
+ */

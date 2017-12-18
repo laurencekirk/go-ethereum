@@ -101,7 +101,12 @@ func removeLeadingZeroDigits(hexString string) (string, error) {
 				}
 			}
 
-			return strings.Join([]string{"0x", without0xPrefix[numLeaderZeros:]}, ""), nil
+			// Catch the, very unlikely, edge case when the signature results in >= 16 leading 0s
+			if numLeaderZeros == len(without0xPrefix) {
+				return "0x0", nil
+			} else {
+				return strings.Join([]string{"0x", without0xPrefix[numLeaderZeros:]}, ""), nil
+			}
 		} else {
 			return hexString, err
 		}
