@@ -260,13 +260,13 @@ func (g *Genesis) ToBlock() (*types.Block, *state.StateDB) {
 		// Retrieve the seed from the genesis configuration
 		genesisSeed := g.Config.Coterie.Seed
 		head.ExtendedHeader = &types.ExtendedHeader{
-			Seed: *types.HexToSignature(genesisSeed),
-			Signature: types.Signature{},
+			Seed:          *types.HexToSignature(genesisSeed),
+			Authorisation: types.Signature{},
 		}
 	} else if g.ExtendedHeader != nil {
 		head.ExtendedHeader = &types.ExtendedHeader{}
 		copy(head.ExtendedHeader.Seed[:], g.ExtendedHeader.Seed[:])
-		copy(head.ExtendedHeader.Signature[:], g.ExtendedHeader.Signature[:])
+		copy(head.ExtendedHeader.Authorisation[:], g.ExtendedHeader.Authorisation[:])
 	}
 
 	return types.NewBlock(head, nil, nil, nil), statedb

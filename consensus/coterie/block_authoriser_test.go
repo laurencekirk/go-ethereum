@@ -84,8 +84,8 @@ func TestSignaturesOnSameBlocksAreTheSame(t *testing.T) {
 		t.Error("Expected that the blocks would have the same block number")
 	}
 
-	if bytes.Compare(block1Header.ExtendedHeader.Signature[:], block2Header.ExtendedHeader.Signature[:]) != 0 ||
-		bytes.Compare(block1Header.ExtendedHeader.Signature[:], block3Header.ExtendedHeader.Signature[:]) != 0 {
+	if bytes.Compare(block1Header.ExtendedHeader.Authorisation[:], block2Header.ExtendedHeader.Authorisation[:]) != 0 ||
+		bytes.Compare(block1Header.ExtendedHeader.Authorisation[:], block3Header.ExtendedHeader.Authorisation[:]) != 0 {
 		t.Error("Expected that the blocks' signatures would be the same")
 	}
 }
@@ -144,9 +144,9 @@ func TestSignaturesOnSubsequentBlocksAreNotTheSame(t *testing.T) {
 		t.Error("Expected that the blocks would have different numbers")
 	}
 
-	if bytes.Compare(block1Header.ExtendedHeader.Signature[:], block2Header.ExtendedHeader.Signature[:]) == 0 ||
-		bytes.Compare(block1Header.ExtendedHeader.Signature[:], block3Header.ExtendedHeader.Signature[:]) == 0  ||
-		bytes.Compare(block2Header.ExtendedHeader.Signature[:], block3Header.ExtendedHeader.Signature[:]) == 0  {
+	if bytes.Compare(block1Header.ExtendedHeader.Authorisation[:], block2Header.ExtendedHeader.Authorisation[:]) == 0 ||
+		bytes.Compare(block1Header.ExtendedHeader.Authorisation[:], block3Header.ExtendedHeader.Authorisation[:]) == 0  ||
+		bytes.Compare(block2Header.ExtendedHeader.Authorisation[:], block3Header.ExtendedHeader.Authorisation[:]) == 0  {
 		t.Error("Expected that the blocks' signatures would be different")
 	}
 }
@@ -313,8 +313,8 @@ func TestNextGeneratedSeedIsTheSameGivenSameInput(t *testing.T) {
 
 func getMockedParentHeader() *types.Header {
 	extendedHeader := types.ExtendedHeader{
-		Signature:		*types.HexToSignature( "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
-		Seed:			*types.HexToSignature( "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
+		Authorisation: *types.HexToSignature( "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+		Seed:          *types.HexToSignature( "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"),
 	}
 
 	return &types.Header{
@@ -342,7 +342,7 @@ func getMockBlockHeaderForAuthenticating(parentHeader *types.Header, blockNumber
 
 func getMockedBlockHeader() *types.Header {
 	extendedHeader := types.ExtendedHeader{
-		Signature:		*types.HexToSignature( "0x1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
+		Authorisation: *types.HexToSignature( "0x1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
 	}
 
 	return &types.Header{

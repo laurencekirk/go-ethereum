@@ -56,7 +56,7 @@ func (c *Coterie) AuthoriseBlock(parentHeader *types.Header, header *types.Heade
 		return err
 	}
 
-	header.SetExtendedHeader(sig)
+	header.SetAuthorisation(sig)
 	return nil
 }
 

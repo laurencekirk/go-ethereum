@@ -22,9 +22,9 @@ func (c *Coterie) VerifyBlockAuthenticity(parentsHeader *types.Header, currentBl
 		return false, err
 	}
 
-	log.Debug("Retrieved the block signer, checking that they were selected based on the signature", "signer", blockAuthor, "signature", currentBlockHeader.ExtendedHeader.Signature)
+	log.Debug("Retrieved the block signer, checking that they were selected based on the signature", "signer", blockAuthor, "signature", currentBlockHeader.ExtendedHeader.Authorisation)
 
-	return c.HasBeenSelectedToCommittee(blockAuthor, &currentBlockHeader.ExtendedHeader.Signature)
+	return c.HasBeenSelectedToCommittee(blockAuthor, &currentBlockHeader.ExtendedHeader.Authorisation)
 }
 
 func RetrieveBlockAuthor(parentsHeader *types.Header, currentBlockHeader *types.Header) (common.Address, error) {
@@ -33,7 +33,7 @@ func RetrieveBlockAuthor(parentsHeader *types.Header, currentBlockHeader *types.
 		return common.Address{}, errors.New("unable to verify a block with a missing parent hash")
 	}
 	// Extract from the signature the public key that is paired with the private key; that was used to sign the block
-	publicKey, err := crypto.SigToPub(plaintext, currentBlockHeader.ExtendedHeader.Signature[:])
+	publicKey, err := crypto.SigToPub(plaintext, currentBlockHeader.ExtendedHeader.Authorisation[:])
 	if err != nil {
 		return common.Address{}, err
 	}

@@ -11,19 +11,19 @@ var _ = (*extendedHeaderMarshaling)(nil)
 
 func (e ExtendedHeader) MarshalJSON() ([]byte, error) {
 	type ExtendedHeader struct {
-		Seed      Signature `json:"seed"       gencodec:"required"`
-		Signature Signature `json:"signature"   gencodec:"required"`
+		Seed          Signature `json:"seed"            gencodec:"required"`
+		Authorisation Signature `json:"authorisation"   gencodec:"required"`
 	}
 	var enc ExtendedHeader
 	enc.Seed = e.Seed
-	enc.Signature = e.Signature
+	enc.Authorisation = e.Authorisation
 	return json.Marshal(&enc)
 }
 
 func (e *ExtendedHeader) UnmarshalJSON(input []byte) error {
 	type ExtendedHeader struct {
-		Seed      *Signature `json:"seed"       gencodec:"required"`
-		Signature *Signature `json:"signature"   gencodec:"required"`
+		Seed          *Signature `json:"seed"            gencodec:"required"`
+		Authorisation *Signature `json:"authorisation"   gencodec:"required"`
 	}
 	var dec ExtendedHeader
 	if err := json.Unmarshal(input, &dec); err != nil {
@@ -33,9 +33,9 @@ func (e *ExtendedHeader) UnmarshalJSON(input []byte) error {
 		return errors.New("missing required field 'seed' for ExtendedHeader")
 	}
 	e.Seed = *dec.Seed
-	if dec.Signature == nil {
-		return errors.New("missing required field 'signature' for ExtendedHeader")
+	if dec.Authorisation == nil {
+		return errors.New("missing required field 'authorisation' for ExtendedHeader")
 	}
-	e.Signature = *dec.Signature
+	e.Authorisation = *dec.Authorisation
 	return nil
 }

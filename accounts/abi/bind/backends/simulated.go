@@ -63,8 +63,8 @@ func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
 		Config: params.AllProtocolChanges,
 		Alloc: alloc,
 		ExtendedHeader: &types.ExtendedHeader{
-			Seed: types.Signature{},
-			Signature: types.Signature{},
+			Seed:          types.Signature{},
+			Authorisation: types.Signature{},
 		},
 	}
 	genesis.MustCommit(database)

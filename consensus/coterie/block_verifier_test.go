@@ -19,7 +19,7 @@ func TestValidSeedIsCorrectlyVerified(t *testing.T) {
 	validSignature := "0x14a625c5a7452ac86f852e8f29e854b8cde398e7037346cc6face77f51a2f0e62141f4d74b921f4e0cafe8e51315fdc2d6198d0fa7a2d1ccb9cef64b8252c63f00"
 
 	currentBlockHeader.ExtendedHeader.Seed = *types.HexToSignature(validSeed)
-	currentBlockHeader.ExtendedHeader.Signature = *types.HexToSignature(validSignature)
+	currentBlockHeader.ExtendedHeader.Authorisation = *types.HexToSignature(validSignature)
 
 	// Test
 	valid, err := isSeedValid(parentHeader, currentBlockHeader)
@@ -51,7 +51,7 @@ func TestValidButIncorrectSeedForBlockIsNotVerified(t *testing.T) {
 
 	// Authorisation for the address 0x2ef57dae52a8637bAee02A3178880c65a208Af89
 	authorisationForDifferentAddress := "0xb08a3d7fd4701e7c2831aff7e372bbcacf0975270b12e8bf46d7a66b443a692c2e7dbe38386813ddb46439316bb00de79dd5a47ee54b6ecd514d77e599cece8600"
-    currentBlockHeader.ExtendedHeader.Signature = *types.HexToSignature(authorisationForDifferentAddress)
+    currentBlockHeader.ExtendedHeader.Authorisation = *types.HexToSignature(authorisationForDifferentAddress)
 
 	// Test
 	valid, err := isSeedValid(parentHeader, currentBlockHeader)
@@ -82,7 +82,7 @@ func TestSeedForAuthorisedButFromPreviousBlockIsNotVerified(t *testing.T) {
 
 	// Authorisation for the address 0x18238f0d6F9A6765B0972AbB9F54A51d1d583503
 	authorisationForDifferentAddress := "0x69716421b4fae3c4d1b3412c86be4d22ec3d062cb69f32b8a8602d20a21fefd32a41d000383e1d5d2263067fafbc861a7e50b2425784971fe2f229e4bdff53a201"
-	currentBlockHeader.ExtendedHeader.Signature = *types.HexToSignature(authorisationForDifferentAddress)
+	currentBlockHeader.ExtendedHeader.Authorisation = *types.HexToSignature(authorisationForDifferentAddress)
 
 	// Test
 	valid, err := isSeedValid(parentHeader, currentBlockHeader)

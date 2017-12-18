@@ -762,7 +762,7 @@ func (s *PublicBlockChainAPI) rpcOutputBlock(b *types.Block, inclTx bool, fullTx
 		"timestamp":        (*hexutil.Big)(head.Time),
 		"transactionsRoot": head.TxHash,
 		"receiptsRoot":     head.ReceiptHash,
-		"signature": 		head.ExtendedHeader.Signature.String(),
+		"authorisation": 	head.ExtendedHeader.Authorisation.String(),
 		"seed": 			head.ExtendedHeader.Seed.String(),
 	}
 

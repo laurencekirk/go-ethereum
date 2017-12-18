@@ -176,7 +176,7 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 	}
 
 	// First check to see if the node is part of the current coterie / block-creator set
-	inCommittee, err := c.HasBeenSelectedToCommittee(signer, &currentBlockHeader.ExtendedHeader.Signature)
+	inCommittee, err := c.HasBeenSelectedToCommittee(signer, &currentBlockHeader.ExtendedHeader.Authorisation)
 	if err != nil {
 		return nil, err
 	} else if ! inCommittee {
