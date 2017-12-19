@@ -34,10 +34,10 @@ type SignerFn func(account accounts.Account, hash []byte) ([]byte, error)
 type Coterie struct {
 	signer 						common.Address      // Ethereum address of the signing key
 	signFn 						SignerFn            // Signer function to authorize hashes with
-	ks 							*keystore.KeyStore
-	dirLocFun					DirectoryLocatorFn  // Data directory location function
-	minersWhitelist				*CoterieWhitelist  	// Whitelist of miners governed by a smart contract
-	consensusParameters			*CoterieParameters	// Smart contract which controls some of the consensus parameters
+	ks 							*keystore.KeyStore			// Keystore which stores the Ethereum accounts
+	dirLocFun					DirectoryLocatorFn  		// Data directory location function
+	minersWhitelist				AuthorisedMinersWhitelist  	// Whitelist of miners governed by a smart contract
+	consensusParameters			ConsensusParameters			// Smart contract which controls some of the consensus parameters
 
 	secondLayerConsensusEngine	consensus.Engine 	// Another consensus engine e.g. Ethash PoW engine that this consensus engine 'extends' and can call into.
 

@@ -5,7 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"math"
 	"github.com/golang/mock/gomock"
-	mocks "github.com/ethereum/go-ethereum/consensus/coterie/mocks"
+	"github.com/ethereum/go-ethereum/consensus/coterie/mocks"
 )
 
 const TOLERANCE = 0.000000000000001
@@ -121,10 +121,83 @@ func TestCalculateWinningThreshold(t *testing.T) {
 		assertValueInCorrectRange(threshold, t)
 		assertNearEquals(c.expectedThreshold, threshold, t)
 	}
-
 }
 /**
  * calculateWinningThreshold tests START
+ */
+
+/**
+ * hasWonSecretLottery tests START
+ */
+func TestHasWonSecretLottery(t *testing.T) {
+	// Setup
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cases := []struct {
+		committeeSize, whitelistSize uint
+		authorisation string
+		expectedToBeSelected bool
+	}{
+		{	committeeSize: uint(20),
+			whitelistSize: uint(100), // committee threshold of ~ 0.2
+			authorisation: "0x49e58681b5cb510332393cad62722dd3374773f1cd37d75066e1b0880d73f9b273ab2913bf4160fd066b9a77d1b8b690631ec7dc3db012741a7ba24d9c25edff00",  // ~ 0.28
+			expectedToBeSelected: false,
+		},
+		{	committeeSize: uint(20),
+			whitelistSize: uint(100), // committee threshold of ~ 0.2
+			authorisation: "0x30A3D70A4FFFF000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",  // ~ 0.19
+			expectedToBeSelected: true,
+		},
+		{	committeeSize: uint(9),
+			whitelistSize: uint(10), // committee threshold of ~ 0.9
+			authorisation: "0xFEFEFEFEFEFEF000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",  // ~ 0.996078431
+			expectedToBeSelected: false,
+		},
+		{	committeeSize: uint(9),
+			whitelistSize: uint(10), // committee threshold of ~ 0.9
+			authorisation: "0xE666666666666000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",  // ~ 0.9
+			expectedToBeSelected: true,
+		},
+		{	committeeSize: uint(12987123),
+			whitelistSize: uint(94982709308), // committee threshold of ~ 0.000136731
+			authorisation: "0x0008E9B390000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",  // ~ 0.000136
+			expectedToBeSelected: true,
+		},
+		{	committeeSize: uint(12987123),
+			whitelistSize: uint(94982709308), // committee threshold of ~ 0.000136731
+			authorisation: "0x00092CCF70000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",  // ~ 0.00014
+			expectedToBeSelected: false,
+		},
+
+	}
+	for _, c := range cases {
+		// Setup
+		whitelist := mocks.NewMockAuthorisedWhitelist(ctrl)
+		params := mocks.NewMockConsensusParameters(ctrl)
+
+		params.EXPECT().GetTargetCommitteeSize().Return(c.committeeSize, nil).Times(1)
+		whitelist.EXPECT().GetWhitelistSize().Return(c.whitelistSize, nil).Times(1)
+
+		signature := types.HexToSignature(c.authorisation)
+		consensus := GetMockCoterieForValidation(params, whitelist)
+
+		// Test
+		selected, err := consensus.hasWonSecretLottery(signature)
+
+		// Verify
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if c.expectedToBeSelected != selected {
+			t.Errorf("Expected that the authorisation would result in the block producer being selected: auth %v, whitelist size %v, committee size %v", c.authorisation, c.whitelistSize, c.committeeSize)
+		}
+	}
+}
+
+/**
+ * hasWonSecretLottery tests END
  */
 
 
@@ -138,11 +211,10 @@ func assertValueInCorrectRange(value float64, t *testing.T) {
 }
 
 func assertNearEquals(expected float64, actual float64, t *testing.T) {
-	if math.Abs(expected - actual) > TOLERANCE && math.Abs(actual - expected) > TOLERANCE {
+	if math.Abs(expected-actual) > TOLERANCE && math.Abs(actual-expected) > TOLERANCE {
 		t.Errorf("Expected %q, Actual %q. Was not within the tolerence `%q`", expected, actual, TOLERANCE)
 	}
 }
-
 /**
  * Testing utility functions END
  */

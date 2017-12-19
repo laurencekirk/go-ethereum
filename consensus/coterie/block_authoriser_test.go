@@ -363,6 +363,13 @@ func GetMockCoterieForAuthorising(signer common.Address, signerFn SignerFn, ks *
 	}
 }
 
+func GetMockCoterieForValidation(parameters ConsensusParameters, whitelist AuthorisedMinersWhitelist) *Coterie {
+	return &Coterie{
+		minersWhitelist: whitelist,
+		consensusParameters: parameters,
+	}
+}
+
 
 func CreateTempKeystore(t *testing.T) (dir string, ks *keystore.KeyStore) {
 	d, err := ioutil.TempDir("", "geth-keystore-test")
