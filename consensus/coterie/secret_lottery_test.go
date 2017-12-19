@@ -6,6 +6,7 @@ import (
 	"math"
 	"github.com/golang/mock/gomock"
 	"github.com/ethereum/go-ethereum/consensus/coterie/mocks"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 const TOLERANCE = 0.000000000000001
@@ -195,11 +196,90 @@ func TestHasWonSecretLottery(t *testing.T) {
 		}
 	}
 }
-
 /**
  * hasWonSecretLottery tests END
  */
 
+/**
+ * HasBeenSelectedToCommittee tests START
+ */
+func TestHasBeenSelectedToCommittee(t *testing.T) {
+	// Setup
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cases := []struct {
+		committeeSize, whitelistSize uint
+		address, authorisation string
+		addressInWhitelist, expectedToBeSelected bool
+	}{
+		{	committeeSize: uint(400),
+			whitelistSize: uint(500), // committee threshold of ~ 0.8
+			address: "0x9e5e939fb0a23529934c061d6ecf4c93e7893d4e",
+			authorisation: "0xcb49c9f1a18340b5a8806db212d0e7d0be3605d257fe7a4814a5b3c84f90e53323d84e8a317651dbd69a05d3038518a01842001cd9024b0f4642182e359809ff00",  // ~ 0.794094678
+			addressInWhitelist: true,
+			expectedToBeSelected: true,
+		},
+		{	committeeSize: uint(98),
+			whitelistSize: uint(274), // committee threshold of ~ 0.362
+			address: "0x30ff130a7d11ef9d1efbdf19d5309556acd129cf",
+			authorisation: "0x5c7a424a53c7e82625e727d23c676d1dd307b79d1ed3708847723dd91b66d1ae08f56c9efc6b8422c302bb941f12c114179d86a08cb2aedf7d29ef1d060f858b01",  // ~ 0.361
+			addressInWhitelist: true,
+			expectedToBeSelected: false,
+		},
+		{	committeeSize: uint(2378),
+			whitelistSize: uint(62363), // committee threshold of ~ 0.03813
+			address: "0x46dfb921f8f7edbbd8100458b7c1beefeabf6e15",
+			authorisation: "0x09c336764c106475a1f5ea01abc7fe39d7474ec461a8a88a04fd6bdaf066f3080c98eaf50de01be86afbdf64a47d4e1d36fd8c341666e0372b98516fe7ae89cd00",  // ~ 0.0381
+			addressInWhitelist: true,
+			expectedToBeSelected: false,
+		},
+		{	committeeSize: uint(0),
+			whitelistSize: uint(0),
+			address: "0xea30250dd7263a4783c66463c236a2153d6b88b4",
+			authorisation: "0x1335dd6905c3f7a49d570fe7d31596801a6a566819b6c0443ae76b47c5f65be517d1bdfccb54f3e90d40a2654dbad98d1d9096482e8d06e9f9437ec5e8b7df9400",
+			addressInWhitelist: false,
+			expectedToBeSelected: false,
+		},
+	}
+	for _, c := range cases {
+		// Setup
+		whitelist := mocks.NewMockAuthorisedWhitelist(ctrl)
+		params := mocks.NewMockConsensusParameters(ctrl)
+
+		signer := common.HexToAddress(c.address)
+
+		whitelist.EXPECT().IsMinerInWhitelist(signer).Return(c.addressInWhitelist, nil).Times(1)
+
+		if c.addressInWhitelist {
+			params.EXPECT().GetTargetCommitteeSize().Return(c.committeeSize, nil).Times(1)
+			whitelist.EXPECT().GetWhitelistSize().Return(c.whitelistSize, nil).Times(1)
+		}
+
+		signature := types.HexToSignature(c.authorisation)
+		consensus := GetMockCoterieForValidation(params, whitelist)
+
+		// Test
+		selected, err := consensus.HasBeenSelectedToCommittee(signer, signature)
+
+		// Verify
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if c.expectedToBeSelected != selected {
+			if selected {
+				t.Errorf("Expected that the authorisation would result in the block producer being selected: auth %v, whitelist size %v, committee size %v", c.authorisation, c.whitelistSize, c.committeeSize)
+			} else {
+				t.Errorf("Expected that the authorisation would result in the block producer NOT being selected: auth %v, whitelist size %v, committee size %v", c.authorisation, c.whitelistSize, c.committeeSize)
+			}
+
+		}
+	}
+}
+/**
+ * HasBeenSelectedToCommittee tests START
+ */
 
 /**
  * Testing utility functions START
