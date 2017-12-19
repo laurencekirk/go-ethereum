@@ -21,16 +21,24 @@ var (
 	whitelistContractAddress = common.HexToAddress("0x0000000000000000000000000000000000000042")
 )
 
-type AuthorisedMinersWhitelist struct {
+type AuthorisedMinersWhitelist interface {
+	IsMinerInWhitelist(minerAddress common.Address) (bool, error)
+
+	GetWhitelistSize() (uint, error)
+
+	AddMinerToWhitelist(minerAddress common.Address, msgSender *ecdsa.PrivateKey) (*types.Transaction, error)
+}
+
+type CoterieWhitelist struct {
 	whitelistContractInstance *contract.AuthorisedMinersWhitelist
 }
 
-func NewAuthorisedMinersWhitelist(contractBackend bind.ContractBackend) (*AuthorisedMinersWhitelist, error) {
+func NewAuthorisedMinersWhitelist(contractBackend bind.ContractBackend) (*CoterieWhitelist, error) {
 	whitelist, err := contract.NewAuthorisedMinersWhitelist(whitelistContractAddress, contractBackend)
 	if err != nil {
 		return nil, err
 	}
-	return &AuthorisedMinersWhitelist{
+	return &CoterieWhitelist{
 		whitelist,
 	}, nil
 }
@@ -41,7 +49,7 @@ func NewAuthorisedMinersWhitelist(contractBackend bind.ContractBackend) (*Author
 // 0x6c80e492308f051eba48d03bcc04625682ae3e07
 // 0x30ff130a7d11ef9d1efbdf19d5309556acd129cf
 
-func (self *AuthorisedMinersWhitelist) IsMinerInWhitelist(minerAddress common.Address) (bool, error) {
+func (self *CoterieWhitelist) IsMinerInWhitelist(minerAddress common.Address) (bool, error) {
 	if self.whitelistContractInstance == nil {
 		return false, errorMissingWhitelistContract
 	}
@@ -57,7 +65,7 @@ func (self *AuthorisedMinersWhitelist) IsMinerInWhitelist(minerAddress common.Ad
 	}
 }
 
-func (self *AuthorisedMinersWhitelist) GetWhitelistSize() (uint, error) {
+func (self *CoterieWhitelist) GetWhitelistSize() (uint, error) {
 	if self.whitelistContractInstance == nil {
 		return 0, errorMissingWhitelistContract
 	}
@@ -69,7 +77,7 @@ func (self *AuthorisedMinersWhitelist) GetWhitelistSize() (uint, error) {
 	}
 }
 
-func (self *AuthorisedMinersWhitelist) AddMinerToWhitelist(minerAddress common.Address, msgSender *ecdsa.PrivateKey) (*types.Transaction, error) {
+func (self *CoterieWhitelist) AddMinerToWhitelist(minerAddress common.Address, msgSender *ecdsa.PrivateKey) (*types.Transaction, error) {
 	if self.whitelistContractInstance == nil {
 		return nil, errorMissingWhitelistContract
 	}

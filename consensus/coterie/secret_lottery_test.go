@@ -4,6 +4,8 @@ import (
 	"testing"
 	"github.com/ethereum/go-ethereum/core/types"
 	"math"
+	"github.com/golang/mock/gomock"
+	mocks "github.com/ethereum/go-ethereum/consensus/coterie/mocks"
 )
 
 const TOLERANCE = 0.000000000000001
@@ -83,6 +85,48 @@ func TestRemoveLeadingZeroDigitsHandlesErrors(t *testing.T) {
 /**
  * removeLeadingZeroDigits tests END
  */
+
+/**
+ * calculateWinningThreshold tests START
+ */
+func TestCalculateWinningThreshold(t *testing.T) {
+	// Setup
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cases := []struct {
+		committeeSize, whitelistSize uint
+		expectedThreshold float64
+	}{
+		{committeeSize: uint(20), whitelistSize: uint(100), expectedThreshold: float64(0.2)},
+		{committeeSize: uint(7), whitelistSize: uint(8), expectedThreshold: float64(0.875)},
+		{committeeSize: uint(3926), whitelistSize: uint(93716), expectedThreshold: float64(0.04189252635622519)},
+	}
+	for _, c := range cases {
+		// Setup
+		whitelist := mocks.NewMockAuthorisedWhitelist(ctrl)
+		params := mocks.NewMockConsensusParameters(ctrl)
+
+		params.EXPECT().GetTargetCommitteeSize().Return(c.committeeSize, nil).Times(1)
+		whitelist.EXPECT().GetWhitelistSize().Return(c.whitelistSize, nil).Times(1)
+
+		// Test
+		threshold, err := calculateWinningThreshold(params, whitelist)
+
+		// Verify
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assertValueInCorrectRange(threshold, t)
+		assertNearEquals(c.expectedThreshold, threshold, t)
+	}
+
+}
+/**
+ * calculateWinningThreshold tests START
+ */
+
 
 /**
  * Testing utility functions START

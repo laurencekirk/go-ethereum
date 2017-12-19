@@ -68,7 +68,7 @@ func calculateSignaturesRealValue(authorisation *types.Signature) (float64, erro
 	return asFloat / divisor, nil
 }
 
-func calculateWinningThreshold(contractParameters *ConsensusParameters, whitelist *AuthorisedMinersWhitelist) (float64, error) {
+func calculateWinningThreshold(contractParameters ConsensusParameters, whitelist AuthorisedMinersWhitelist) (float64, error) {
 	targetCommitteeSize, err := contractParameters.GetTargetCommitteeSize()
 	if err != nil {
 		return float64(-1), err

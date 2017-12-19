@@ -16,21 +16,25 @@ var (
 	parametersContractAddress = common.HexToAddress("0x0000000000000000000000000000000000000043")
 )
 
-type ConsensusParameters struct {
+type ConsensusParameters interface {
+	GetTargetCommitteeSize() (uint, error)
+}
+
+type CoterieParameters struct {
 	parametersContractInstance *contract.PpokwParameters
 }
 
-func NewConsensusParameters(contractBackend bind.ContractBackend) (*ConsensusParameters, error) {
+func NewConsensusParameters(contractBackend bind.ContractBackend) (*CoterieParameters, error) {
 	parameters, err := contract.NewPpokwParameters(parametersContractAddress, contractBackend)
 	if err != nil {
 		return nil, err
 	}
-	return &ConsensusParameters{
+	return &CoterieParameters{
 		parameters,
 	}, nil
 }
 
-func (self *ConsensusParameters) GetTargetCommitteeSize() (uint, error) {
+func (self *CoterieParameters) GetTargetCommitteeSize() (uint, error) {
 	if self.parametersContractInstance == nil {
 		return 0, errorMissingWhitelistContract
 	}
