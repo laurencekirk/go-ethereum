@@ -11,6 +11,7 @@ import (
 
 // generate the below by running <code>govendor generate +l</code> in the root of the project.
 //go:generate abigen --sol contract/authorised_miners_whitelist.sol --pkg contract --out contract/authorised_miners_whitelist.go
+//go:generate mockgen -source=authorised_miners.go -destination=mocks/mock_authorised_miners.go -package=mocks
 
 var (
 	errorMissingWhitelistContract = errors.New("The expected AuthorisedMinersWhitelist Smart Contract is not present")

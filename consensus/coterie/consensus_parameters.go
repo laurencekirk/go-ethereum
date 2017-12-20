@@ -9,6 +9,7 @@ import (
 
 // generate the below by running <code>govendor generate +l</code> in the root of the project.
 //go:generate abigen --sol contract/ppokw_parameters.sol --pkg contract --out contract/ppokw_parameters.go
+//go:generate mockgen -source=consensus_parameters.go -destination=mocks/mock_consensus_parameters.go -package=mocks
 
 var (
 	errorMissingParametersContract = errors.New("The expected the consensus parameters Smart Contract is not present")
