@@ -13,42 +13,10 @@ package coterie
 	"math/big"
 	"bytes"
 	"github.com/ethereum/go-ethereum/crypto"
-)*/
-
-
-const (
-	NONCE_VALUE_1    uint64 = uint64(0xa13a5a8c8f2bb1c4)
-	NONCE_VALUE_2    uint64 = uint64(0x690d71d0195b542d)
-	NONCE_VALUE_3    uint64 = uint64(0xcf7743040301d974)
-	ACCOUNT_PASSWORD string = ""
-	EXTRA_VALUE_1    string = "test block"
 )
 
-var currentBlockNumber int64 = 0
 
-/*
-func TestCanAuthenticateBlock(t *testing.T) {
-	dir, ks := createKeystore(t)
-	defer os.RemoveAll(dir)
 
-	account1 := createNewAccount(t, ks)
-
-	am := createAccountManager(ks)
-	block := getNewBlock(NONCE_VALUE_1)
-
-	if block.ExtendedHeader() != nil {
-		t.Error("Expected that the block would not have been signed yet.")
-	}
-
-	err := AuthenticateBlock(block , am, &account1.Address, ACCOUNT_PASSWORD)
-	if err != nil {
-		t.Errorf("Unable to add the authentication to the block: %v", err)
-	}
-
-	if block.ExtendedHeader() == nil {
-		t.Error("Expected that the block would have a signature.")
-	}
-}
 
 // Check to make sure that if a miner that is in the whitelist mines a block, that the verification process succeeds - the block is considered valid
 func TestCanAuthoriseAndVerifyABlock(t *testing.T) {
@@ -100,84 +68,6 @@ func TestCanNotVerifyABlockAuthorisedByAMinerNotInTheWhitelist(t *testing.T) {
 
 	if valid {
 		t.Error("Expected that the block would *not* have been considered authentic because the miner is not in the whitelist.")
-	}
-}
-
-func TestSignaturesOnSubsequentBlocksAreNotTheSame(t *testing.T) {
-	dir, ks := createKeystore(t)
-	defer os.RemoveAll(dir)
-
-	account1 := createNewAccount(t, ks)
-	account2 := createNewAccount(t, ks)
-	account3 := createNewAccount(t, ks)
-
-	whitelistMiner(t, account1)
-	whitelistMiner(t, account2)
-	whitelistMiner(t, account3)
-
-	am := createAccountManager(ks)
-	block1 := getNewBlock(NONCE_VALUE_1)
-
-	if block1.ExtendedHeader() != nil {
-		t.Error("Expected that the block would not have been signed yet.")
-	}
-
-	err := AuthenticateBlock(block1 , am, &account1.Address, ACCOUNT_PASSWORD)
-	if err != nil {
-		t.Errorf("Unable to add the authentication to the block: %v", err)
-	}
-
-	valid := validateAuthentication(t, block1)
-
-	if !valid {
-		t.Error("Expected that the block would have a *valid* signature.")
-	}
-
-	//
-	block2 := getNewBlock(NONCE_VALUE_2)
-
-	if block2.ExtendedHeader() != nil {
-		t.Error("Expected that the block would not have been signed yet.")
-	}
-
-	err = AuthenticateBlock(block2 , am, &account2.Address, ACCOUNT_PASSWORD)
-	if err != nil {
-		t.Errorf("Unable to add the authentication to the block: %v", err)
-	}
-
-	valid = validateAuthentication(t, block2)
-
-	if !valid {
-		t.Error("Expected that the block would have a *valid* signature.")
-	}
-
-	//
-	block3 := getNewBlock(NONCE_VALUE_3)
-
-	if block3.ExtendedHeader() != nil {
-		t.Error("Expected that the block would not have been signed yet.")
-	}
-
-	err = AuthenticateBlock(block3 , am, &account3.Address, ACCOUNT_PASSWORD)
-	if err != nil {
-		t.Errorf("Unable to add the authentication to the block: %v", err)
-	}
-
-	valid = validateAuthentication(t, block3)
-
-	if !valid {
-		t.Error("Expected that the block would have a *valid* signature.")
-	}
-
-	// Block sanity tests
-
-	// The block numbers must be sequential
-	if block1.Number().Cmp(block2.Number()) >= 0 || block1.Number().Cmp(block3.Number()) >= 0 || block2.Number().Cmp(block3.Number()) >= 0 {
-		t.Error("Expected that the blocks would have different numbers")
-	}
-
-	if block1.ExtendedHeader() == block2.ExtendedHeader() || block1.ExtendedHeader() == block3.ExtendedHeader() || block2.ExtendedHeader() == block3.ExtendedHeader() {
-		t.Error("Expected that the blocks' signatures would be different")
 	}
 }
 
@@ -277,14 +167,6 @@ func createAccountManager(ks *keystore.KeyStore) (*accounts.Manager) {
 		ks,
 	}
 	return accounts.NewManager(backends...)
-}
-
-func createNewAccount(t *testing.T, ks *keystore.KeyStore) (*accounts.Account) {
-	acc, err := ks.NewAccount(ACCOUNT_PASSWORD)
-	if err != nil {
-		t.Errorf("Unable to create the account: %v", err)
-	}
-	return &acc
 }
 
 func getNewBlock(nonceValue uint64) *types.Block {
