@@ -12,6 +12,7 @@ import (
 	rpc "github.com/ethereum/go-ethereum/rpc"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+	consensus "github.com/ethereum/go-ethereum/consensus"
 )
 
 // MockChainReader is a mock of ChainReader interface
@@ -146,7 +147,7 @@ func (mr *MockEngineMockRecorder) Author(header interface{}) *gomock.Call {
 }
 
 // VerifyHeader mocks base method
-func (m *MockEngine) VerifyHeader(chain ChainReader, header *types.Header, seal bool) error {
+func (m *MockEngine) VerifyHeader(chain consensus.ChainReader, header *types.Header, seal bool) error {
 	ret := m.ctrl.Call(m, "VerifyHeader", chain, header, seal)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -158,7 +159,7 @@ func (mr *MockEngineMockRecorder) VerifyHeader(chain, header, seal interface{}) 
 }
 
 // VerifyHeaders mocks base method
-func (m *MockEngine) VerifyHeaders(chain ChainReader, headers []*types.Header, seals []bool) (chan<- struct{}, <-chan error) {
+func (m *MockEngine) VerifyHeaders(chain consensus.ChainReader, headers []*types.Header, seals []bool) (chan<- struct{}, <-chan error) {
 	ret := m.ctrl.Call(m, "VerifyHeaders", chain, headers, seals)
 	ret0, _ := ret[0].(chan<- struct{})
 	ret1, _ := ret[1].(<-chan error)
@@ -171,7 +172,7 @@ func (mr *MockEngineMockRecorder) VerifyHeaders(chain, headers, seals interface{
 }
 
 // VerifyUncles mocks base method
-func (m *MockEngine) VerifyUncles(chain ChainReader, block *types.Block) error {
+func (m *MockEngine) VerifyUncles(chain consensus.ChainReader, block *types.Block) error {
 	ret := m.ctrl.Call(m, "VerifyUncles", chain, block)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -183,7 +184,7 @@ func (mr *MockEngineMockRecorder) VerifyUncles(chain, block interface{}) *gomock
 }
 
 // VerifySeal mocks base method
-func (m *MockEngine) VerifySeal(chain ChainReader, header *types.Header) error {
+func (m *MockEngine) VerifySeal(chain consensus.ChainReader, header *types.Header) error {
 	ret := m.ctrl.Call(m, "VerifySeal", chain, header)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -195,7 +196,7 @@ func (mr *MockEngineMockRecorder) VerifySeal(chain, header interface{}) *gomock.
 }
 
 // Prepare mocks base method
-func (m *MockEngine) Prepare(chain ChainReader, header *types.Header) error {
+func (m *MockEngine) Prepare(chain consensus.ChainReader, header *types.Header) error {
 	ret := m.ctrl.Call(m, "Prepare", chain, header)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -207,7 +208,7 @@ func (mr *MockEngineMockRecorder) Prepare(chain, header interface{}) *gomock.Cal
 }
 
 // Finalize mocks base method
-func (m *MockEngine) Finalize(chain ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
+func (m *MockEngine) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 	ret := m.ctrl.Call(m, "Finalize", chain, header, state, txs, uncles, receipts)
 	ret0, _ := ret[0].(*types.Block)
 	ret1, _ := ret[1].(error)
@@ -220,7 +221,7 @@ func (mr *MockEngineMockRecorder) Finalize(chain, header, state, txs, uncles, re
 }
 
 // Seal mocks base method
-func (m *MockEngine) Seal(chain ChainReader, block *types.Block, stop <-chan struct{}) (*types.Block, error) {
+func (m *MockEngine) Seal(chain consensus.ChainReader, block *types.Block, stop <-chan struct{}) (*types.Block, error) {
 	ret := m.ctrl.Call(m, "Seal", chain, block, stop)
 	ret0, _ := ret[0].(*types.Block)
 	ret1, _ := ret[1].(error)
@@ -233,7 +234,7 @@ func (mr *MockEngineMockRecorder) Seal(chain, block, stop interface{}) *gomock.C
 }
 
 // APIs mocks base method
-func (m *MockEngine) APIs(chain ChainReader) []rpc.API {
+func (m *MockEngine) APIs(chain consensus.ChainReader) []rpc.API {
 	ret := m.ctrl.Call(m, "APIs", chain)
 	ret0, _ := ret[0].([]rpc.API)
 	return ret0
@@ -281,7 +282,7 @@ func (mr *MockPoWMockRecorder) Author(header interface{}) *gomock.Call {
 }
 
 // VerifyHeader mocks base method
-func (m *MockPoW) VerifyHeader(chain ChainReader, header *types.Header, seal bool) error {
+func (m *MockPoW) VerifyHeader(chain consensus.ChainReader, header *types.Header, seal bool) error {
 	ret := m.ctrl.Call(m, "VerifyHeader", chain, header, seal)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -293,7 +294,7 @@ func (mr *MockPoWMockRecorder) VerifyHeader(chain, header, seal interface{}) *go
 }
 
 // VerifyHeaders mocks base method
-func (m *MockPoW) VerifyHeaders(chain ChainReader, headers []*types.Header, seals []bool) (chan<- struct{}, <-chan error) {
+func (m *MockPoW) VerifyHeaders(chain consensus.ChainReader, headers []*types.Header, seals []bool) (chan<- struct{}, <-chan error) {
 	ret := m.ctrl.Call(m, "VerifyHeaders", chain, headers, seals)
 	ret0, _ := ret[0].(chan<- struct{})
 	ret1, _ := ret[1].(<-chan error)
@@ -306,7 +307,7 @@ func (mr *MockPoWMockRecorder) VerifyHeaders(chain, headers, seals interface{}) 
 }
 
 // VerifyUncles mocks base method
-func (m *MockPoW) VerifyUncles(chain ChainReader, block *types.Block) error {
+func (m *MockPoW) VerifyUncles(chain consensus.ChainReader, block *types.Block) error {
 	ret := m.ctrl.Call(m, "VerifyUncles", chain, block)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -318,7 +319,7 @@ func (mr *MockPoWMockRecorder) VerifyUncles(chain, block interface{}) *gomock.Ca
 }
 
 // VerifySeal mocks base method
-func (m *MockPoW) VerifySeal(chain ChainReader, header *types.Header) error {
+func (m *MockPoW) VerifySeal(chain consensus.ChainReader, header *types.Header) error {
 	ret := m.ctrl.Call(m, "VerifySeal", chain, header)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -330,7 +331,7 @@ func (mr *MockPoWMockRecorder) VerifySeal(chain, header interface{}) *gomock.Cal
 }
 
 // Prepare mocks base method
-func (m *MockPoW) Prepare(chain ChainReader, header *types.Header) error {
+func (m *MockPoW) Prepare(chain consensus.ChainReader, header *types.Header) error {
 	ret := m.ctrl.Call(m, "Prepare", chain, header)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -342,7 +343,7 @@ func (mr *MockPoWMockRecorder) Prepare(chain, header interface{}) *gomock.Call {
 }
 
 // Finalize mocks base method
-func (m *MockPoW) Finalize(chain ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
+func (m *MockPoW) Finalize(chain consensus.ChainReader, header *types.Header, state *state.StateDB, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) (*types.Block, error) {
 	ret := m.ctrl.Call(m, "Finalize", chain, header, state, txs, uncles, receipts)
 	ret0, _ := ret[0].(*types.Block)
 	ret1, _ := ret[1].(error)
@@ -355,7 +356,7 @@ func (mr *MockPoWMockRecorder) Finalize(chain, header, state, txs, uncles, recei
 }
 
 // Seal mocks base method
-func (m *MockPoW) Seal(chain ChainReader, block *types.Block, stop <-chan struct{}) (*types.Block, error) {
+func (m *MockPoW) Seal(chain consensus.ChainReader, block *types.Block, stop <-chan struct{}) (*types.Block, error) {
 	ret := m.ctrl.Call(m, "Seal", chain, block, stop)
 	ret0, _ := ret[0].(*types.Block)
 	ret1, _ := ret[1].(error)
@@ -368,7 +369,7 @@ func (mr *MockPoWMockRecorder) Seal(chain, block, stop interface{}) *gomock.Call
 }
 
 // APIs mocks base method
-func (m *MockPoW) APIs(chain ChainReader) []rpc.API {
+func (m *MockPoW) APIs(chain consensus.ChainReader) []rpc.API {
 	ret := m.ctrl.Call(m, "APIs", chain)
 	ret0, _ := ret[0].([]rpc.API)
 	return ret0
