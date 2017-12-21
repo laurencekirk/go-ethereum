@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
+//go:generate mockgen -source=consensus.go -destination=coterie/mocks/mock_consensus.go -package=mocks
+
 // Package consensus implements different Ethereum consensus engines.
 package consensus
 
