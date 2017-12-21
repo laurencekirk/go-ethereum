@@ -311,6 +311,7 @@ func TestNextGeneratedSeedIsTheSameGivenSameInput(t *testing.T) {
 
 /*
  * retrieveSeedsHashToBeSigned Tests START
+ * Verification Keccak 256 hashes generated on https://www.decrane.io/keccak - with input as Hex (minus '0x')
  */
 func TestRetrieveSeedsHashToBeSigned(t *testing.T) {
 	cases := []struct {
@@ -318,36 +319,36 @@ func TestRetrieveSeedsHashToBeSigned(t *testing.T) {
 	}{
 		{
 			seed: "0xe2552809ef4938abcc6bebbd2e18599a5be52bd9742569ace91ce51b9ff32bc419a1920614bef1144856e18fbf22d8fea510c109bc884fd77f08fe584c96cb8201",
-			expectedSeedHash: "",
+			expectedSeedHash: "0x0635855ac49573e293a275e1a5d549d68e863f0c6f38ed8e83ea093a4f89db32",
 		},
 		{
 			seed: "0xe4a1de4cdb7202de3d38f2d40495f22a3bf418612dcfda9667cb478e20dbef4a102dc4a289ba7c95ecbd96e97fe0ec0c9a50b150932a01092b56bc5aa4279aee00",
-			expectedSeedHash: "",
+			expectedSeedHash: "0x5466ea4c063b8e8f099aad790db1e9affe8c0dbb1df785349a5b9a774e759364",
 		},
 		{
 			seed: "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-			expectedSeedHash: "",
+			expectedSeedHash: "0xae61b77b3e4cbac1353bfa4c59274e3ae531285c24e3cf57c11771ecbf72d9bf",
 		},
 		{
 			seed: "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-			expectedSeedHash: "",
+			expectedSeedHash: "0x9af6efc6ab5cd7befe102062b8be2c2d87d6751a9ce0680fbd06c12e87cf7f31",
 		},
 		{
 			seed: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-			expectedSeedHash: "",
+			expectedSeedHash: "0x9af6efc6ab5cd7befe102062b8be2c2d87d6751a9ce0680fbd06c12e87cf7f31",
 		},
 	}
 	for _, c := range cases {
 		// Setup
 		parentHeader := getMockedParentHeader()
-
+		parentHeader.ExtendedHeader.Seed = *types.HexToSignature(c.seed)
 
 		// Test
 		hash := retrieveSeedsHashToBeSigned(parentHeader)
 
 		// Verify
-		if len(hash) == 32 {
-			t.Errorf("Expected that the seed hash returned for the parent header would be the correct length: parent hash %v, hash %v", parentHeader, hash.String())
+		if len(hash) != 32 {
+			t.Errorf("Expected that the seed hash returned for the parent header would be the correct length: parent hash %v, hash %v, length %v", parentHeader.ExtendedHeader.Seed.String(), hash.String(), len(hash))
 		}
 
 		if hash.String() != c.expectedSeedHash {

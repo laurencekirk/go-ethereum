@@ -51,6 +51,7 @@ func TestAuthorisedByCorrectlyReturnsAuthor(t *testing.T) {
 		// Test
 		retrievedAddress, err := consensus.AuthorisedBy(mockChaiReader, currentBlockHeader)
 
+		// Verify
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -65,4 +66,21 @@ func TestAuthorisedByCorrectlyReturnsAuthor(t *testing.T) {
 
 /**
  * AuthorisedBy tests END
+ */
+
+/**
+* VerifySeal tests START
+*/
+func TestVerifySealValidScenarios(t *testing.T) {
+
+
+	// Setup
+
+	// Test
+
+	// Verify
+
+}
+/**
+ * VerifySeal tests END
  */
