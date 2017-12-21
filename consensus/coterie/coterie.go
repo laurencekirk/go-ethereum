@@ -198,7 +198,7 @@ func (c *Coterie) Seal(chain consensus.ChainReader, block *types.Block, stop <-c
 }
 
 func GetParentBlockHeader(chain consensus.ChainReader, currentBlockHeader *types.Header) (*types.Header) {
-	childBlockNumber := currentBlockHeader.Number.Uint64();
+	childBlockNumber := currentBlockHeader.Number.Uint64()
 	return chain.GetHeader(currentBlockHeader.ParentHash, childBlockNumber-1)
 }
 

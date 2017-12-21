@@ -309,6 +309,77 @@ func TestNextGeneratedSeedIsTheSameGivenSameInput(t *testing.T) {
  * GenerateNextSeed Tests End
  */
 
+/*
+ * retrieveSeedsHashToBeSigned Tests START
+ */
+func TestRetrieveSeedsHashToBeSigned(t *testing.T) {
+	cases := []struct {
+		seed, expectedSeedHash string
+	}{
+		{
+			seed: "0xe2552809ef4938abcc6bebbd2e18599a5be52bd9742569ace91ce51b9ff32bc419a1920614bef1144856e18fbf22d8fea510c109bc884fd77f08fe584c96cb8201",
+			expectedSeedHash: "",
+		},
+		{
+			seed: "0xe4a1de4cdb7202de3d38f2d40495f22a3bf418612dcfda9667cb478e20dbef4a102dc4a289ba7c95ecbd96e97fe0ec0c9a50b150932a01092b56bc5aa4279aee00",
+			expectedSeedHash: "",
+		},
+		{
+			seed: "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+			expectedSeedHash: "",
+		},
+		{
+			seed: "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+			expectedSeedHash: "",
+		},
+		{
+			seed: "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+			expectedSeedHash: "",
+		},
+	}
+	for _, c := range cases {
+		// Setup
+		parentHeader := getMockedParentHeader()
+
+
+		// Test
+		hash := retrieveSeedsHashToBeSigned(parentHeader)
+
+		// Verify
+		if len(hash) == 32 {
+			t.Errorf("Expected that the seed hash returned for the parent header would be the correct length: parent hash %v, hash %v", parentHeader, hash.String())
+		}
+
+		if hash.String() != c.expectedSeedHash {
+			t.Errorf("Expected that the hash would be correct: expected %v, got %v", c.expectedSeedHash, hash.String())
+		}
+	}
+
+}
+
+func TestRetrieveSeedsHashSameMultipleTimes(t *testing.T) {
+	// Setup
+	parentHeader := getMockedParentHeader()
+	// Test
+
+	hash1 := retrieveSeedsHashToBeSigned(parentHeader)
+	hash2 := retrieveSeedsHashToBeSigned(parentHeader)
+	hash3 := retrieveSeedsHashToBeSigned(parentHeader)
+
+	// Verify
+	if len(hash1) != 32 || len(hash3) != 32 || len(hash3) != 32 {
+		t.Errorf("Expected that the seed hash returned for the parent header would be the correct length: parent hash %v, hash %v", parentHeader, hash1.String())
+	}
+
+	if hash1 != hash2 || hash2 != hash3 {
+		t.Errorf("Expected that multiple hashes of the same parent header would result in the same seed hash: hash 1 %v, hash 2 %v, hash 3 %v", hash1.String(), hash2.String(), hash3.String())
+	}
+}
+
+/*
+ * retrieveSeedsHashToBeSigned Tests END
+ */
+
 // Utility functions
 
 func getMockedParentHeader() *types.Header {
@@ -328,6 +399,8 @@ func getMockedParentHeader() *types.Header {
 }
 
 func getMockBlockHeaderForAuthenticating(parentHeader *types.Header, blockNumber int64) *types.Header {
+	parentHeader.Number = big.NewInt(blockNumber - 1)
+
 	extendedHeader := types.ExtendedHeader{}
 
 	return &types.Header{
