@@ -54,7 +54,7 @@ type Genesis struct {
 	Coinbase   common.Address      `json:"coinbase"`
 	Alloc      GenesisAlloc        `json:"alloc"      gencodec:"required"`
 
-	ExtendedHeader *types.ExtendedHeader `json:"extendedHeader"   gencodec:"required"`
+	ExtendedHeader *types.ExtendedHeader `json:"extendedHeader"`
 
 	// These fields are used for consensus tests. Please don't use them
 	// in actual genesis blocks.
@@ -255,8 +255,10 @@ func (g *Genesis) ToBlock() (*types.Block, *state.StateDB) {
 		head.Difficulty = params.GenesisDifficulty
 	}
 
+    log.Info("About to set up the extended header in the genesis block")
 	// Coterie-specific logic
 	if g.Config.Coterie != nil {
+	    log.Info("Config is Coterie")
 		// Retrieve the seed from the genesis configuration
 		genesisSeed := g.Config.Coterie.Seed
 		head.ExtendedHeader = &types.ExtendedHeader{
