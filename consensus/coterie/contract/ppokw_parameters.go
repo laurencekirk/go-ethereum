@@ -4,6 +4,7 @@
 package contract
 
 import (
+	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -13,10 +14,10 @@ import (
 )
 
 // PpokwParametersABI is the input ABI used to generate the binding from.
-const PpokwParametersABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"newCommitteeSize\",\"type\":\"uint32\"}],\"name\":\"setCommitteeSize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"committeeSize\",\"outputs\":[{\"name\":\"\",\"type\":\"uint32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"sizeBefore\",\"type\":\"uint32\"},{\"indexed\":false,\"name\":\"sizeAfter\",\"type\":\"uint32\"}],\"name\":\"CommitteeSizeChanged\",\"type\":\"event\"}]"
+const PpokwParametersABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"difficulty\",\"outputs\":[{\"name\":\"difficulty\",\"type\":\"uint256\"},{\"name\":\"blockNumber\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newCommitteeSize\",\"type\":\"uint32\"}],\"name\":\"setCommitteeSize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newDifficulty\",\"type\":\"uint256\"}],\"name\":\"setDifficulty\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"committeeSize\",\"outputs\":[{\"name\":\"\",\"type\":\"uint32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"sizeBefore\",\"type\":\"uint32\"},{\"indexed\":false,\"name\":\"sizeAfter\",\"type\":\"uint32\"}],\"name\":\"CommitteeSizeChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"previousDifficulty\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"newDifficulty\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"changedBy\",\"type\":\"address\"}],\"name\":\"DifficultyAdjusted\",\"type\":\"event\"}]"
 
 // PpokwParametersBin is the compiled bytecode used for deploying new contracts.
-const PpokwParametersBin = `0x6060604052341561000f57600080fd5b61013a8061001e6000396000f30060606040526004361061004b5763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166336890ec281146100505780639cf4364b1461006e575b600080fd5b341561005b57600080fd5b61006c63ffffffff6004351661009a565b005b341561007957600080fd5b610081610102565b60405163ffffffff909116815260200160405180910390f35b6000547ff49b1bc7c3c86f8c510b5f0307a4f47c7553d95d5c4d7b0447f0889e1f9675409063ffffffff168260405163ffffffff9283168152911660208201526040908101905180910390a16000805463ffffffff191663ffffffff92909216919091179055565b60005463ffffffff16815600a165627a7a7230582042b2696cf515771614d26fd26a62c7af1718861b560e4c84f5bd01c0b44bb8110029`
+const PpokwParametersBin = `0x6060604052341561000f57600080fd5b6102368061001e6000396000f3006060604052600436106100615763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166319cae462811461006657806336890ec214610091578063602512e1146100af5780639cf4364b146100c5575b600080fd5b341561007157600080fd5b6100796100f1565b60405191825260208201526040908101905180910390f35b341561009c57600080fd5b6100ad63ffffffff600435166100fa565b005b34156100ba57600080fd5b6100ad600435610162565b34156100d057600080fd5b6100d86101fe565b60405163ffffffff909116815260200160405180910390f35b60015460025482565b6000547ff49b1bc7c3c86f8c510b5f0307a4f47c7553d95d5c4d7b0447f0889e1f9675409063ffffffff168260405163ffffffff9283168152911660208201526040908101905180910390a16000805463ffffffff191663ffffffff92909216919091179055565b806000811161017057600080fd5b7fc3045499c8ff4110de4029bd9ba27c1c54cef08823dfc8d37dc93c9051c46c6a44834333604051938452602084019290925260408084019190915273ffffffffffffffffffffffffffffffffffffffff90911660608301526080909101905180910390a1604080519081016040528281524360208201526001815181556020820151600190910155505050565b60005463ffffffff16815600a165627a7a72305820cd1b01bbb7a226fd02642aed0e5f73cca566c1846ea5dbbcd4b178bf635530b70029`
 
 // DeployPpokwParameters deploys a new Ethereum contract, binding an instance of PpokwParameters to it.
 func DeployPpokwParameters(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *PpokwParameters, error) {
@@ -184,6 +185,42 @@ func (_PpokwParameters *PpokwParametersCallerSession) CommitteeSize() (uint32, e
 	return _PpokwParameters.Contract.CommitteeSize(&_PpokwParameters.CallOpts)
 }
 
+// Difficulty is a free data retrieval call binding the contract method 0x19cae462.
+//
+// Solidity: function difficulty() constant returns(difficulty uint256, blockNumber uint256)
+func (_PpokwParameters *PpokwParametersCaller) Difficulty(opts *bind.CallOpts) (struct {
+	Difficulty  *big.Int
+	BlockNumber *big.Int
+}, error) {
+	ret := new(struct {
+		Difficulty  *big.Int
+		BlockNumber *big.Int
+	})
+	out := ret
+	err := _PpokwParameters.contract.Call(opts, out, "difficulty")
+	return *ret, err
+}
+
+// Difficulty is a free data retrieval call binding the contract method 0x19cae462.
+//
+// Solidity: function difficulty() constant returns(difficulty uint256, blockNumber uint256)
+func (_PpokwParameters *PpokwParametersSession) Difficulty() (struct {
+	Difficulty  *big.Int
+	BlockNumber *big.Int
+}, error) {
+	return _PpokwParameters.Contract.Difficulty(&_PpokwParameters.CallOpts)
+}
+
+// Difficulty is a free data retrieval call binding the contract method 0x19cae462.
+//
+// Solidity: function difficulty() constant returns(difficulty uint256, blockNumber uint256)
+func (_PpokwParameters *PpokwParametersCallerSession) Difficulty() (struct {
+	Difficulty  *big.Int
+	BlockNumber *big.Int
+}, error) {
+	return _PpokwParameters.Contract.Difficulty(&_PpokwParameters.CallOpts)
+}
+
 // SetCommitteeSize is a paid mutator transaction binding the contract method 0x36890ec2.
 //
 // Solidity: function setCommitteeSize(newCommitteeSize uint32) returns()
@@ -203,4 +240,25 @@ func (_PpokwParameters *PpokwParametersSession) SetCommitteeSize(newCommitteeSiz
 // Solidity: function setCommitteeSize(newCommitteeSize uint32) returns()
 func (_PpokwParameters *PpokwParametersTransactorSession) SetCommitteeSize(newCommitteeSize uint32) (*types.Transaction, error) {
 	return _PpokwParameters.Contract.SetCommitteeSize(&_PpokwParameters.TransactOpts, newCommitteeSize)
+}
+
+// SetDifficulty is a paid mutator transaction binding the contract method 0x602512e1.
+//
+// Solidity: function setDifficulty(newDifficulty uint256) returns()
+func (_PpokwParameters *PpokwParametersTransactor) SetDifficulty(opts *bind.TransactOpts, newDifficulty *big.Int) (*types.Transaction, error) {
+	return _PpokwParameters.contract.Transact(opts, "setDifficulty", newDifficulty)
+}
+
+// SetDifficulty is a paid mutator transaction binding the contract method 0x602512e1.
+//
+// Solidity: function setDifficulty(newDifficulty uint256) returns()
+func (_PpokwParameters *PpokwParametersSession) SetDifficulty(newDifficulty *big.Int) (*types.Transaction, error) {
+	return _PpokwParameters.Contract.SetDifficulty(&_PpokwParameters.TransactOpts, newDifficulty)
+}
+
+// SetDifficulty is a paid mutator transaction binding the contract method 0x602512e1.
+//
+// Solidity: function setDifficulty(newDifficulty uint256) returns()
+func (_PpokwParameters *PpokwParametersTransactorSession) SetDifficulty(newDifficulty *big.Int) (*types.Transaction, error) {
+	return _PpokwParameters.Contract.SetDifficulty(&_PpokwParameters.TransactOpts, newDifficulty)
 }

@@ -126,7 +126,22 @@ func (c *Coterie) VerifySeal(chain consensus.ChainReader, header *types.Header) 
 // Prepare initializes the consensus fields of a block header according to the
 // rules of a particular engine. The changes are executed inline.
 func (c *Coterie) Prepare(chain consensus.ChainReader, header *types.Header) error {
-	// TODO implement proper logic
+
+	// Covers the edge case where the node is starting up
+	if c.consensusParameters != nil {
+		if hasBeenAdjustedThisBlock, err := c.consensusParameters.HasDifficultyBeenExternallyAdjusted(header); err != nil {
+			return err
+		} else if hasBeenAdjustedThisBlock {
+			if difficulty, err := c.consensusParameters.GetAdjustedDifficulty(); err != nil {
+				return err
+			} else {
+				header.Difficulty = difficulty;
+				return nil
+			}
+		}
+	}
+
+	// If it has not been adjusted then defer to the regular difficulty algorithm - of basing it off of the parent header
 	return c.secondLayerConsensusEngine.Prepare(chain, header)
 }
 
