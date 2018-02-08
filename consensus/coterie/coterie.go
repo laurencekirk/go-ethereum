@@ -135,7 +135,7 @@ func (c *Coterie) Prepare(chain consensus.ChainReader, header *types.Header) err
 			if difficulty, err := c.consensusParameters.GetAdjustedDifficulty(); err != nil {
 				return err
 			} else {
-				header.Difficulty = difficulty;
+				header.Difficulty = difficulty
 				return nil
 			}
 		}
@@ -220,7 +220,17 @@ func GetParentBlockHeader(chain consensus.ChainReader, currentBlockHeader *types
 // APIs returns the RPC APIs this consensus engine provides.
 func (c *Coterie) APIs(chain consensus.ChainReader) []rpc.API {
 	// TODO implement proper logic
-	return nil
+	return c.secondLayerConsensusEngine.APIs(chain)
+}
+
+// Hashrate implements PoW, returning the measured rate of the search invocations
+// per second over the last minute.
+func (c *Coterie) Hashrate() float64 {
+	log.Info("In the new Coterie function")
+	if pow, ok := c.secondLayerConsensusEngine.(consensus.PoW); ok {
+		return pow.Hashrate()
+	}
+	return 0
 }
 
 // Coterie-specific functions / methods
